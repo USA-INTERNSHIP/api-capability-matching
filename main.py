@@ -1,21 +1,21 @@
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from core.config import settings
 from routes.base_routes import api_router
 from db.base_class import Base
 from db.session import engine
-
+from dotenv import load_dotenv
+import os
 
 def include_router(app):
     app.include_router(api_router)
-
 
 def create_tables(app):
     Base.metadata.create_all(bind=engine)
 
 
 def create_app():
-    app = FastAPI(title=settings.PROJECT_NAME)
+    app = FastAPI(title=os.getenv("PROJECT_NAME"))
 
     # CORS settings
     app.add_middleware(
@@ -30,5 +30,7 @@ def create_app():
     create_tables(app)
     return app
 
-
+load_dotenv(".env")
 app = create_app()
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
