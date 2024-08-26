@@ -1,16 +1,18 @@
 from fastapi import APIRouter,Depends, HTTPException
 from fastapi.responses import JSONResponse
-from schemas.user_schema import UserSchema
+from schemas.user_schema import UserSchema, UserRegisterSchema
 from sqlalchemy.orm import Session
-from db.repository.user_repository import create_user,get_users
+from db.repository.user_repository import create_user,get_users, get_user_by_email
 from db.session import get_db
 
 
 user_routes = APIRouter()
 
 @user_routes.post("/user")
-def create(user:UserSchema,db:Session = Depends(get_db)):
+def create(user:UserRegisterSchema,db:Session = Depends(get_db)):
     try :
+        if get_user_by_email(db,user.email):
+            raise HTTPException(status_code=400, detail="Email already registered")
         user = create_user(user=user,db=db)
         return user
     except Exception as e:
@@ -18,11 +20,7 @@ def create(user:UserSchema,db:Session = Depends(get_db)):
 @user_routes.get("/user")
 def get(db:Session=Depends(get_db)):
     try:
-        user_list = get_users(db=db)
-        if len(user_list) != 0:
-            return user_list
-        else :
-            return JSONResponse(content="No details Found.",status_code=204)
+        return get_users(db=db)
     except Exception as e:
         raise HTTPException(status_code=500,detail=str(e))
 
