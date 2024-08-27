@@ -8,3 +8,4 @@ bcrypt
 cryptography
 passlib
 python-multipart
+google-auth

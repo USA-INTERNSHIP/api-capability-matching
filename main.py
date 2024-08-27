@@ -25,7 +25,9 @@ def create_app():
         allow_methods=["*"],  # Change this to specific methods if needed
         allow_headers=["*"],  # Change this to specific headers if needed
     )
-
+    @app.get("/health-check")
+    def health_check():
+        return {"status": "ok"}
     include_router(app)
     create_tables(app)
     return app
@@ -33,4 +35,4 @@ def create_app():
 load_dotenv(".env")
 app = create_app()
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

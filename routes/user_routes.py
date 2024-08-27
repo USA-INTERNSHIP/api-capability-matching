@@ -8,7 +8,7 @@ from db.session import get_db
 
 user_routes = APIRouter()
 
-@user_routes.post("/user")
+@user_routes.post("/register-intern")
 def create(user:UserRegisterSchema,db:Session = Depends(get_db)):
     try :
         if get_user_by_email(db,user.email):
