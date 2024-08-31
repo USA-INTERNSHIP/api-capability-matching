@@ -78,7 +78,7 @@ async def verify_google_token(auth_request: GoogleAuthRequest ,db: Session = Dep
         user_db = get_user_by_email(db=db,email=user_mail)
         if not user_db:
             new_user =  UserRegisterSchema(
-            username = user_mail.split('@')[0],
+            username = user_mail,
             email= user_mail,
             password = secrets.token_urlsafe(32),
             socialLogin= True,
