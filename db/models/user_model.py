@@ -11,4 +11,4 @@ class Users(Base):
     password = Column(String)
     socialLogin = Column(Boolean, default=False)
     userRole = Column(String)
-    hiringManager = relationship('HiringManager', backref='user', uselist=False)
+    hiringManager = relationship('HiringManager', back_populates='user', uselist=False)

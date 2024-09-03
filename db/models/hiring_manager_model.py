@@ -5,9 +5,9 @@ from db.base_class import Base
 
 class HiringManager(Base):
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String)
     mobileNo = Column(BigInteger)
-    bio = Column(String, unique=True)
+    bio = Column(String)
     socialMedia = Column(String)
     idProofName = Column(String)
     idProofNo = Column(String)
@@ -17,9 +17,9 @@ class HiringManager(Base):
 
     user_id = Column(Integer, ForeignKey('users.id'), unique=True)
 
-    user = relationship('Users', backref='hiringManager',uselist = False)
+    user = relationship('Users', back_populates='hiringManager',uselist = False)
     # Relationships
-    jobs = relationship("Job", back_populates="hiringManager")
+    # jobs = relationship("Job", back_populates="hiringManager")
 
 
 class Job(Base):
@@ -28,8 +28,8 @@ class Job(Base):
     description = Column(String)
     salary = Column(Float)
     location = Column(String)
-    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
-
-    hiring_manager = relationship("HiringManager", back_populates="jobs")
+    # hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
+    #
+    # hiring_manager = relationship("HiringManager", back_populates="jobs")
 
 # Define other models similarly for Application, Review, Contract, etc.

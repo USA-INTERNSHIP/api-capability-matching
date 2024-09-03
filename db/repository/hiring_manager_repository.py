@@ -1,15 +1,39 @@
+from http.client import HTTPException
+
 from sqlalchemy.orm import Session
 from db.models.hiring_manager_model import HiringManager, Job  # Correct import
+from schemas.hiring_manager_schema import  HiringManagerProfileSchema
 
 
-def register_hiring_manager_logic(hiring_manager, db: Session):
-    # Register a new hiring manager in the database
-    pass
+def update_hiring_manager_profile(profile:HiringManagerProfileSchema, db: Session):
+    try:
+        hiringManger = HiringManager(
+            name = profile.name,
+            mobileNo = profile.mobileNo,
+            bio = profile.bio,
+            socialMedia = profile.socialMedia,
+            idProofName = profile.idProofName,
+            idProofNo = profile.idProofNo,
+            companyName =profile.companyName,
+            companyAddress = profile.companyAddress,
+            user_id = profile.user_id
+        )
+        db.add(hiringManger)
+        db.commit()
+        db.refresh(hiringManger)
+        return hiringManger
+    except Exception as e:
+        return HTTPException(tatus_code=400, detail=str(e))
+
+def retrive_hiring_manager_profile(hiring_manager_id,db:Session):
+    return db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
 
 
-def create_profile_logic(profile, db: Session):
-    # Create or update the profile of a hiring manager
-    pass
+
+
+
+
+
 
 
 def post_job_logic(job, db: Session):

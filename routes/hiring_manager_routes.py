@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
+from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
+from routes.auth import verify_token
 from schemas.hiring_manager_schema import (
-    HiringManagerRegisterSchema, ProfileSchema, JobSchema, ApplicationSchema,
+    HiringManagerProfileSchema,  JobSchema, ApplicationSchema,
     ReviewSchema, ContractSchema
 )
 from db.repository.hiring_manager_repository import (
-    register_hiring_manager_logic, create_profile_logic, post_job_logic,
+    update_hiring_manager_profile, retrive_hiring_manager_profile, post_job_logic,
     search_job_logic, search_interns_logic, review_applications_logic,
     respond_to_interns_logic, post_contract_logic, respond_to_milestones_logic,
     pay_intern_logic, review_payment_history_logic, post_review_logic,
@@ -15,13 +18,15 @@ from db.repository.hiring_manager_repository import (
 
 hiring_manager_routes = APIRouter()
 
-@hiring_manager_routes.post("/register")
-def register_hiring_manager(hiring_manager: HiringManagerRegisterSchema, db: Session = Depends(get_db)):
-    return register_hiring_manager_logic(hiring_manager, db)
+@hiring_manager_routes.get("/profile")
+def retrive_hiring_manager_profile(current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
+    hiring_manager_id = get_userid_by_email(db,current_user['user'])
+    return retrive_hiring_manager_profile(hiring_manager_id,db)
 
-@hiring_manager_routes.post("/create_profile")
-def create_profile(profile: ProfileSchema, db: Session = Depends(get_db)):
-    return create_profile_logic(profile, db)
+
+@hiring_manager_routes.post("/update_hiring_manager_profile")
+def update_hiring_manager_profile(profile: HiringManagerProfileSchema, db: Session = Depends(get_db)):
+    return update_hiring_manager_profile(profile,db)
 
 @hiring_manager_routes.post("/post_job")
 def post_job(job: JobSchema, db: Session = Depends(get_db)):

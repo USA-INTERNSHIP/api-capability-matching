@@ -1,15 +1,17 @@
+from dataclasses import Field
+
 from pydantic import BaseModel
 from typing import Optional
 
-class HiringManagerRegisterSchema(BaseModel):
-    username: str
-    email: str
-    password: str
-
-class ProfileSchema(BaseModel):
-    username: str
-    bio: Optional[str]
-    profile_image: Optional[str]
+class HiringManagerProfileSchema(BaseModel):
+    name: str
+    mobileNo: int
+    bio: int
+    socialMedia: bool
+    idProofName: str
+    idProofNo: str
+    companyName: str
+    companyAddress: str
 
 class JobSchema(BaseModel):
     title: str
