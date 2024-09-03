@@ -1,27 +1,34 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, BigInteger
 from sqlalchemy.orm import relationship
-from db.session import Base
+from db.base_class import Base
 
 
 class HiringManager(Base):
-    __tablename__ = "hiring_managers"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    password = Column(String)
+    name = Column(String, unique=True, nullable=False)
+    mobileNo = Column(BigInteger)
+    bio = Column(String, unique=True)
+    socialMedia = Column(String)
+    idProofName = Column(String)
+    idProofNo = Column(String)
+    companyName = Column(String)
+    companyAddress = Column(String)
+    roleApproval = Column(Boolean, default=False)
 
+    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
+
+    user = relationship('Users', backref='hiringManager',uselist = False)
     # Relationships
-    jobs = relationship("Job", back_populates="hiring_manager")
+    jobs = relationship("Job", back_populates="hiringManager")
 
 
 class Job(Base):
-    __tablename__ = "jobs"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(String)
     salary = Column(Float)
     location = Column(String)
-    hiring_manager_id = Column(Integer, ForeignKey("hiring_managers.id"))
+    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
 
     hiring_manager = relationship("HiringManager", back_populates="jobs")
 

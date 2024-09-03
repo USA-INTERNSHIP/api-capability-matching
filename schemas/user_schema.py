@@ -8,11 +8,3 @@ class UserRegisterSchema(BaseModel):
     socialLogin: bool = Field()
     userRole: str = Field()
 
-class UserSchema(UserRegisterSchema):
-    firstName:str = Field(min_length=1)
-    middleName:str = Field(min_length=1)
-    lastName:str = Field(min_length=1)
-
-    mobile:int  = Field(min_digits=10 )
-    gender:str = Field(min_length=4)
-    highestQualification:str = Field(min_length=1)

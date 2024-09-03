@@ -1,6 +1,6 @@
 from fastapi import APIRouter,Depends, HTTPException
 from fastapi.responses import JSONResponse
-from schemas.user_schema import UserSchema, UserRegisterSchema
+from schemas.user_schema import UserRegisterSchema
 from sqlalchemy.orm import Session
 from db.repository.user_repository import create_user,get_users, get_user_by_email
 from db.session import get_db
