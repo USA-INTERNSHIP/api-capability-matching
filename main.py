@@ -7,8 +7,10 @@ from db.session import engine
 from dotenv import load_dotenv
 import os
 
+
 def include_router(app):
     app.include_router(api_router)
+
 
 def create_tables(app):
     Base.metadata.create_all(bind=engine)
@@ -31,6 +33,7 @@ def create_app():
     include_router(app)
     create_tables(app)
     return app
+
 
 load_dotenv(".env")
 app = create_app()

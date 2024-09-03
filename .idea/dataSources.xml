@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:sqlite:E:\MCA\internship-matching-portal-backend\internship_matching.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="internship_matching [2]" uuid="451bd244-c1c1-4b68-8065-71d5435a3a74">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:D:\Internship Project\backend\internship_matching.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
