@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from db.repository.user_repository import pwd_context, get_user_by_email, create_user
 from db.session import get_db
 from schemas.google_auth_schema import GoogleAuthRequest
-from schemas.user_schema import  UserRegisterSchema
+from schemas.user_schema import UserRegisterSchema, UserLoginSchema
 
 auth_routes = APIRouter()
 load_dotenv(".env")
@@ -38,7 +38,7 @@ def create_access_token(data: dict,expires_delta):
     return encoded_jwt
 
 @auth_routes.post("/login")
-def login_for_access_token(user:UserRegisterSchema,db: Session = Depends(get_db)):
+def login_for_access_token(user:UserLoginSchema,db: Session = Depends(get_db)):
     user_db = authenticate_user(db,user.email,user.password)
     if not user_db:
         raise HTTPException(

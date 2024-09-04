@@ -8,3 +8,6 @@ class UserRegisterSchema(BaseModel):
     socialLogin: bool = Field()
     userRole: str = Field()
 
+class UserLoginSchema(BaseModel):
+    email: str = Field(min_length=3)
+    password: str = Field()

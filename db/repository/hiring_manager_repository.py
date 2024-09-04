@@ -5,25 +5,26 @@ from db.models.hiring_manager_model import HiringManager, Job  # Correct import
 from schemas.hiring_manager_schema import  HiringManagerProfileSchema
 
 
-def update_hiring_manager_profile(profile:HiringManagerProfileSchema, db: Session):
+def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfileSchema, db: Session):
     try:
-        hiringManger = HiringManager(
-            name = profile.name,
-            mobileNo = profile.mobileNo,
-            bio = profile.bio,
-            socialMedia = profile.socialMedia,
-            idProofName = profile.idProofName,
-            idProofNo = profile.idProofNo,
-            companyName =profile.companyName,
-            companyAddress = profile.companyAddress,
-            user_id = profile.user_id
-        )
-        db.add(hiringManger)
+        hiringManager = retrive_hiring_manager_profile(hiring_manager_id,db)
+        if not hiringManager:
+            raise HTTPException(status_code=404, detail="Hiring manager not found")
+
+        hiringManager.name = profile.name
+        hiringManager.mobileNo = profile.mobileNo
+        hiringManager.bio = profile.bio
+        hiringManager.socialMedia = profile.socialMedia
+        hiringManager.idProofName = profile.idProofName
+        hiringManager.idProofNo = profile.idProofNo
+        hiringManager.companyName = profile.companyName
+        hiringManager.companyAddress = profile.companyAddress
+
         db.commit()
-        db.refresh(hiringManger)
-        return hiringManger
+        db.refresh(hiringManager)
+        return hiringManager
     except Exception as e:
-        return HTTPException(tatus_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 def retrive_hiring_manager_profile(hiring_manager_id,db:Session):
     return db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()

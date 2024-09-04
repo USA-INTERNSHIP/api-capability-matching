@@ -49,5 +49,9 @@ def get_users(db:Session):
 def get_user_by_email(db:Session,email:str):
     return db.query(Users).filter(Users.email == email).first()
 
-def get_userid_by_email(db:Session,email:str):
-    return db.query(Users.id).filter(Users.email == email).first()
+def get_userid_by_email(db:Session,email:str) -> int:
+    user = db.query(Users).filter(Users.email == email).first()
+    if user:
+        return user.id
+    else:
+        raise HTTPException(status_code=404, detail="User not found")
