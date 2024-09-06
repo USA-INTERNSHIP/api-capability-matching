@@ -30,8 +30,9 @@ def update_hiring_manager(profile: HiringManagerProfileSchema,current_user:dict 
     return update_hiring_manager_profile(hiring_manager_id,profile,db)
 
 @hiring_manager_routes.post("/post_job")
-def post_job(job: JobSchema, db: Session = Depends(get_db)):
-    return post_job_logic(job, db)
+def post_job(job: JobSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    hiring_manager_id = get_userid_by_email(db,current_user['user'])
+    return post_job_logic(job, db, hiring_manager_id)
 
 @hiring_manager_routes.get("/search_job")
 def search_job(query: str, db: Session = Depends(get_db)):

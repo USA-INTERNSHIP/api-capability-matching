@@ -1,5 +1,5 @@
-
-from typing import Optional
+from datetime import datetime
+from typing import Optional, List
 from pydantic import BaseModel
 
 class IdDetails(BaseModel):
@@ -21,10 +21,24 @@ class HiringManagerProfileSchema(BaseModel):
     company: Optional[Company] = None
 
 class JobSchema(BaseModel):
+    job_id: Optional[int] = None
     title: str
+    subtitle: Optional[str] = None
     description: str
-    salary: float
+    upload_date: datetime
+    deadline: datetime
+    stipend: float
+    duration: str
     location: str
+    technology_used: List[str]
+    hiring_manager: Optional[int] = None
+    approval: Optional[bool] = None
+    jd_doc: Optional[str] = None
+    perks: Optional[str] = None
+    no_of_openings: int
+
+    class Config:
+        orm_mode = True
 
 class ApplicationSchema(BaseModel):
     job_id: int
