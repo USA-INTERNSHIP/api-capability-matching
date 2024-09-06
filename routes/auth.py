@@ -48,7 +48,7 @@ def login_for_access_token(user:UserLoginSchema,db: Session = Depends(get_db)):
     )
     access_token_expires = timedelta(minutes=int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')))
     access_token = create_access_token(
-    data = {"user":user_db.email}, expires_delta=access_token_expires
+    data = {"user":user_db.email,"user_id":user_db.id}, expires_delta=access_token_expires
     )
     return {"access_token": access_token,"user":{"username":user_db.username,"email":user_db.email,"userRole":user_db.userRole}}
 
@@ -87,7 +87,7 @@ async def verify_google_token(auth_request: GoogleAuthRequest ,db: Session = Dep
             user_db = create_user(new_user,db=db)
         access_token_expires = timedelta(minutes=int(os.getenv('ACCESS_TOKEN_EXPIRE_MINUTES')))
         access_token = create_access_token(
-            data={"user": user_db.email}, expires_delta=access_token_expires
+            data={"user": user_db.email,"user_id":user_db.id}, expires_delta=access_token_expires
         )
         return {"access_token": access_token, "user": {"username": user_db.username, "email": user_db.email, "userRole": user_db.userRole}}
 

@@ -5,11 +5,11 @@ from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import verify_token
 from schemas.hiring_manager_schema import (
-    HiringManagerProfileSchema,  JobSchema, ApplicationSchema,
+    HiringManagerProfileSchema, JobSchema, ApplicationSchema,
     ReviewSchema, ContractSchema
 )
 from db.repository.hiring_manager_repository import (
-    update_hiring_manager_profile, retrive_hiring_manager_profile, post_job_logic,
+    update_hiring_manager_profile, retrieve_hiring_manager_profile, post_job_logic,
     search_job_logic, search_interns_logic, review_applications_logic,
     respond_to_interns_logic, post_contract_logic, respond_to_milestones_logic,
     pay_intern_logic, review_payment_history_logic, post_review_logic,
@@ -21,7 +21,7 @@ hiring_manager_routes = APIRouter()
 @hiring_manager_routes.get("/profile")
 def get_hiring_manager_profile(current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db,current_user['user'])
-    return retrive_hiring_manager_profile(hiring_manager_id,db)
+    return retrieve_hiring_manager_profile(hiring_manager_id, db)
 
 
 @hiring_manager_routes.post("/update_hiring_manager_profile")

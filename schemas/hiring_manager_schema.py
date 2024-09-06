@@ -2,15 +2,23 @@
 from typing import Optional
 from pydantic import BaseModel
 
+class IdDetails(BaseModel):
+    idProofName: Optional[str] = None
+    idProofNo: Optional[str] = None
+    idProofLink: Optional[str] = None
+
+class Company(BaseModel):
+    companyName: Optional[str] = None
+    companyAddress: Optional[str] = None
+
 class HiringManagerProfileSchema(BaseModel):
     name: Optional[str] = None
     mobileNo: Optional[int] = None
-    bio: Optional[int] = None
+    bio: Optional[str] = None  # Changed from int to str
     socialMedia: Optional[bool] = None
-    idProofName: Optional[str] = None
-    idProofNo: Optional[str] = None
-    companyName: Optional[str] = None
-    companyAddress: Optional[str] = None
+    roleApproval: Optional[bool] = None  # Added this field
+    idDetails: Optional[IdDetails] = None
+    company: Optional[Company] = None
 
 class JobSchema(BaseModel):
     title: str

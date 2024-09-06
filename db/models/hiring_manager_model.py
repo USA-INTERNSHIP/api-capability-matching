@@ -11,6 +11,7 @@ class HiringManager(Base):
     socialMedia = Column(String)
     idProofName = Column(String)
     idProofNo = Column(String)
+    idProofLink = Column(String)
     companyName = Column(String)
     companyAddress = Column(String)
     roleApproval = Column(Boolean, default=False)
