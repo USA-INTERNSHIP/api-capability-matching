@@ -21,21 +21,21 @@ class HiringManagerProfileSchema(BaseModel):
     company: Optional[Company] = None
 
 class JobSchema(BaseModel):
-    job_id: Optional[int] = None
+    jobId: Optional[int] = None
     title: str
     subtitle: Optional[str] = None
     description: str
-    upload_date: datetime
+    uploadDate: datetime  # Changed from upload_date to uploadDate
     deadline: datetime
     stipend: float
     duration: str
     location: str
-    technology_used: List[str]
-    hiring_manager: Optional[int] = None
+    technologyUsed: List[str]
+    hiringManager: Optional[int] = None
     approval: Optional[bool] = None
-    jd_doc: Optional[str] = None
+    jdDoc: Optional[str] = None
     perks: Optional[str] = None
-    no_of_openings: int
+    noOfOpenings: int
 
     class Config:
         orm_mode = True

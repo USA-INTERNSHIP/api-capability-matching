@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from db.models.hiring_manager_model import HiringManager, Job  # Correct import
 from schemas.hiring_manager_schema import HiringManagerProfileSchema, JobSchema
 from sqlalchemy import or_
+import json  # Add this import at the top of your file
 
 
 
@@ -71,17 +72,17 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
             title=job.title,
             subtitle=job.subtitle,
             description=job.description,
-            upload_date=job.upload_date,
+            upload_date=job.uploadDate,  # Changed to camelCase
             deadline=job.deadline,
             stipend=job.stipend,
             duration=job.duration,
             location=job.location,
-            technology_used=job.technology_used,
+            technology_used=job.technologyUsed,  # Changed to camelCase
             hiring_manager_id=hiring_manager_id,
             approval=job.approval,
-            jd_doc=job.jd_doc,
+            jd_doc=job.jdDoc,  # Changed to camelCase
             perks=job.perks,
-            no_of_openings=job.no_of_openings
+            no_of_openings=job.noOfOpenings  # Changed to camelCase
         )
 
         # Add and commit the new job to the database
@@ -91,8 +92,27 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
         # Refresh the instance to get the latest state from the database
         db.refresh(new_job)
 
-        # Return the new job with HTTP 200 OK status
-        return {"status": "success", "data": new_job}, 200
+        # Format the response data with camelCase keys
+        response_data = {
+            "id": new_job.id,
+            "title": new_job.title,
+            "subtitle": new_job.subtitle,
+            "description": new_job.description,
+            "uploadDate": new_job.upload_date.isoformat(),  # Convert datetime to ISO format
+            "deadline": new_job.deadline.isoformat(),  # Convert datetime to ISO format
+            "stipend": new_job.stipend,
+            "duration": new_job.duration,
+            "location": new_job.location,
+            "technologyUsed": json.loads(new_job.technology_used),  # Convert JSON string to list
+            "hiringManagerId": new_job.hiring_manager_id,  # Changed to camelCase
+            "approval": new_job.approval,
+            "jdDoc": new_job.jd_doc,  # Changed to camelCase
+            "perks": new_job.perks,
+            "noOfOpenings": new_job.no_of_openings  # Changed to camelCase
+        }
+
+        # Return the formatted response with HTTP 200 OK status
+        return {"status": "success", "data": response_data}, 200
 
     except Exception as e:
         # Handle any exceptions and return HTTP 400 Bad Request
