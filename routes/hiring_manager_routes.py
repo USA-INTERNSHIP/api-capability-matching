@@ -13,7 +13,7 @@ from db.repository.hiring_manager_repository import (
     search_job_logic, search_interns_logic, review_applications_logic,
     respond_to_interns_logic, post_contract_logic, respond_to_milestones_logic,
     pay_intern_logic, review_payment_history_logic, post_review_logic,
-    read_reviews_logic
+    read_reviews_logic, get_jobs
 )
 
 hiring_manager_routes = APIRouter()
@@ -33,6 +33,11 @@ def update_hiring_manager(profile: HiringManagerProfileSchema,current_user:dict 
 def post_job(job: JobSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db,current_user['user'])
     return post_job_logic(job, db, hiring_manager_id)
+
+@hiring_manager_routes.get("/get_jobs")
+async def get_jobs_endpoint(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    hiring_manager_id = get_userid_by_email(db, current_user['user'])
+    return get_jobs(hiring_manager_id, db)
 
 @hiring_manager_routes.get("/search_job")
 def search_job(query: str, db: Session = Depends(get_db)):

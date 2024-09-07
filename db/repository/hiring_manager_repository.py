@@ -139,6 +139,38 @@ def search_job_logic(query: str, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+def get_jobs(hiring_manager_id: int, db: Session):
+    try:
+        hiring_manager = db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
+        if not hiring_manager:
+            raise HTTPException(status_code=404, detail="Hiring manager not found")
+
+        jobs = db.query(Job).filter(Job.hiring_manager_id == hiring_manager_id).all()
+        response_data = [
+            {
+                "id": job.id,
+                "title": job.title,
+                "subtitle": job.subtitle,
+                "description": job.description,
+                "uploadDate": job.upload_date.isoformat(),
+                "deadline": job.deadline.isoformat(),
+                "stipend": job.stipend,
+                "duration": job.duration,
+                "location": job.location,
+                "technologyUsed": json.loads(job.technology_used),
+                "hiringManagerId": job.hiring_manager_id,
+                "approval": job.approval,
+                "jdDoc": job.jd_doc,
+                "perks": job.perks,
+                "noOfOpenings": job.no_of_openings
+            }
+            for job in jobs
+        ]
+        return {"status": "success", "data": response_data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 #  other logic functions
 

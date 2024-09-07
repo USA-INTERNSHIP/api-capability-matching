@@ -37,7 +37,7 @@ class Job(Base):
     duration = Column(String)
     location = Column(String)
     technology_used = Column(String)  # Store as JSON string
-    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))  # Ensure the table name matches
+    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
     hiring_manager = relationship("HiringManager", back_populates="jobs")
     approval = Column(Boolean, default=False)
     jd_doc = Column(String)
