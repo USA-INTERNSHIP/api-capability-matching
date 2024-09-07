@@ -14,7 +14,7 @@ def create(user:UserRegisterSchema,db:Session = Depends(get_db)):
         if get_user_by_email(db,user.email):
             raise HTTPException(status_code=400, detail="Email already registered")
         user = create_user(user=user,db=db)
-        return user
+        return {"status":"success","data":user}
     except Exception as e:
         raise HTTPException(status_code=400,detail= str(e))
 @user_routes.get("/user")

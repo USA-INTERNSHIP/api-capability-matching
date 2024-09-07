@@ -50,14 +50,14 @@ def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfile
 
         db.commit()
         db.refresh(hiringManager)
-        return getHiringManagerDTO(hiringManager)
+        return {"status":"success","data":getHiringManagerDTO(hiringManager)}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 def retrieve_hiring_manager_profile(hiring_manager_id, db:Session):
     profile =  db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
     if profile:
-        return getHiringManagerDTO(profile)
+        return {"status":"success","data":getHiringManagerDTO(profile)}
     else:
         return profile
 
