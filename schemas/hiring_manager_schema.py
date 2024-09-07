@@ -37,9 +37,6 @@ class JobSchema(BaseModel):
     perks: Optional[str] = None
     noOfOpenings: int
 
-    class Config:
-        orm_mode = True
-
 class ApplicationSchema(BaseModel):
     job_id: int
     intern_id: int

@@ -36,7 +36,7 @@ def create_user(user:UserRegisterSchema,db:Session):
             db.rollback()
             db.delete(user_obj)
             db.commit()
-            raise HTTPException(status_code=400, detail=f"HiringManager creation failed: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"HiringManager creation failed: {str(ie)}")
 
         return user_obj
     except Exception as e:
