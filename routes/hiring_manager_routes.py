@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import verify_token
+from routes.auth import check_roles
 from schemas.hiring_manager_schema import (
     HiringManagerProfileSchema, JobSchema, ApplicationSchema,
     ReviewSchema, ContractSchema
@@ -19,22 +20,26 @@ from db.repository.hiring_manager_repository import (
 hiring_manager_routes = APIRouter()
 
 @hiring_manager_routes.get("/profile")
+@check_roles(["HIRING_MANAGER"])
 def get_hiring_manager_profile(current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db,current_user['user'])
     return retrieve_hiring_manager_profile(hiring_manager_id, db)
 
 
 @hiring_manager_routes.post("/update_hiring_manager_profile")
+@check_roles(["HIRING_MANAGER"])
 def update_hiring_manager(profile: HiringManagerProfileSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db,current_user['user'])
     return update_hiring_manager_profile(hiring_manager_id,profile,db)
 
 @hiring_manager_routes.post("/post_job")
+@check_roles(["HIRING_MANAGER"])
 def post_job(job: JobSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db,current_user['user'])
     return post_job_logic(job, db, hiring_manager_id)
 
 @hiring_manager_routes.get("/get_jobs")
+@check_roles(["HIRING_MANAGER"])
 async def get_jobs_endpoint(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db, current_user['user'])
     return get_jobs(hiring_manager_id, db)
