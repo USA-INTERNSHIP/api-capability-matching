@@ -156,32 +156,6 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
         raise HTTPException(status_code=400, detail=str(e))
     # Changed to camelCase
 
-
-def search_job_logic(query: str, db: Session):
-
-    # Important note:  If you switch to a different database (like PostgreSQL),
-    # you might need to switch back to ilike for proper case-insensitive matching.
-    # We need to use ilike for postgres sql database
-    # e.g.Job.title.ilike(f"%{query}%"),
-
-    try:
-        jobs = db.query(Job).filter(
-            or_(
-                Job.title.like(f"%{query}%"),
-                Job.description.like(f"%{query}%"),
-                # Job.location.like(f"%{query}%")
-            )
-        ).all()
-        return jobs
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
-import json
-
-
 def update_job_logic(job_id: int, job: JobSchema, db: Session, hiring_manager_id: int):
     """
     Logic for updating an existing job by a hiring manager.
@@ -249,6 +223,39 @@ def update_job_logic(job_id: int, job: JobSchema, db: Session, hiring_manager_id
         # Handle any exceptions that occur during the process
         # Raise HTTP 400 Bad Request with the error detail
         raise HTTPException(status_code=400, detail=str(e))
+
+
+def search_job_logic(query: str, db: Session):
+    """
+    Logic for searching jobs based on a query string.
+
+    Parameters:
+    - query (str): The search term used to find relevant jobs.
+    - db (Session): The database session for executing queries.
+
+    Returns:
+    - A list of jobs that match the search criteria.
+    - Raises HTTPException for errors during the search.
+
+
+    # Important note:  If you switch to a different database (like PostgreSQL),
+    # you might need to switch back to ilike for proper case-insensitive matching.
+    # We need to use ilike for postgres sql database
+    # e.g.Job.title.ilike(f"%{query}%"),
+
+    """
+    try:
+        jobs = db.query(Job).filter(
+            or_(
+                Job.title.like(f"%{query}%"),  # Match title
+                Job.description.like(f"%{query}%"),  # Match description
+                # Job.location.like(f"%{query}%")  # Uncomment if location search is needed
+            )
+        ).all()  # Retrieve all matching jobs
+
+        return jobs  # Return the list of jobs found
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))  # Handle exceptions
 
 
 #  other logic functions

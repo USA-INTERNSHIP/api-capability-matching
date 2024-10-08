@@ -60,9 +60,43 @@ def update_job(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))  # Raise an HTTP exception in case of error
 
+
 @hiring_manager_routes.get("/search_job")
-def search_job(query: str, db: Session = Depends(get_db)):
-    return search_job_logic(query, db)
+@check_roles(["HIRING_MANAGER"])  # Ensure that only hiring managers can access this endpoint
+def search_job(
+    query: str,
+    current_user: dict = Depends(verify_token),  # Verify the current user
+    db: Session = Depends(get_db)  # Accepts the database session for querying
+):
+    """
+    Search for jobs based on a query string provided by the hiring manager.
+
+    Parameters:
+    - query (str): The search term used to find relevant jobs.
+    - current_user (dict): The currently authenticated user information.
+    - db (Session): The database session used for querying the database.
+
+    Returns:
+    - A list of jobs that match the search criteria, or an error if no jobs are found.
+    """
+    try:
+        # You can log or check the user information if needed
+        # Example: print(current_user) or log to a logging system
+
+        # Call the search logic function with the provided query and database session
+        response = search_job_logic(query, db)
+
+        # Check if any jobs were found
+        if not response:  # If no jobs match the query
+            raise HTTPException(status_code=404, detail="No jobs found matching the query.")
+
+        # Return the list of matching jobs with HTTP 200 OK status
+        return {"status": "success", "data": response}, 200
+
+    except Exception as e:
+        # Handle any exceptions and return HTTP 400 Bad Request with the error detail
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @hiring_manager_routes.get("/search_interns")
 def search_interns(query: str, db: Session = Depends(get_db)):
