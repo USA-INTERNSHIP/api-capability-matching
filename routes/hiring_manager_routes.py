@@ -14,7 +14,7 @@ from db.repository.hiring_manager_repository import (
     search_job_logic, search_interns_logic, review_applications_logic,
     respond_to_interns_logic, post_contract_logic, respond_to_milestones_logic,
     pay_intern_logic, review_payment_history_logic, post_review_logic,
-    read_reviews_logic, get_jobs
+    read_reviews_logic, get_jobs, update_job_logic
 )
 
 hiring_manager_routes = APIRouter()
@@ -43,6 +43,22 @@ def post_job(job: JobSchema,current_user:dict = Depends(verify_token), db: Sessi
 async def get_jobs_endpoint(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
     hiring_manager_id = get_userid_by_email(db, current_user['user'])
     return get_jobs(hiring_manager_id, db)
+
+@hiring_manager_routes.put("/update_job/{job_id}")
+@check_roles(["HIRING_MANAGER"])  # Ensure that only hiring managers can access this endpoint
+def update_job(
+    job_id: int,  # Include the job_id parameter
+    job: JobSchema,  # The job data to be updated
+    current_user: dict = Depends(verify_token),  # Dependency to verify the current user
+    db: Session = Depends(get_db)  # Dependency to get the database session
+):
+    hiring_manager_id = get_userid_by_email(db, current_user['user'])  # Get the hiring manager ID from the email
+    try:
+        # Call the logic function with the necessary parameters, including job_id
+        response = update_job_logic(job_id, job, db, hiring_manager_id)  # Pass job_id to the update logic
+        return response
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))  # Raise an HTTP exception in case of error
 
 @hiring_manager_routes.get("/search_job")
 def search_job(query: str, db: Session = Depends(get_db)):

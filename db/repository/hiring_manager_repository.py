@@ -177,6 +177,79 @@ def search_job_logic(query: str, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+import json
+
+
+def update_job_logic(job_id: int, job: JobSchema, db: Session, hiring_manager_id: int):
+    """
+    Logic for updating an existing job by a hiring manager.
+
+    Parameters:
+    - job_id (int): The ID of the job to update.
+    - job (JobSchema): The new job data provided for the update.
+    - db (Session): The database session for executing queries.
+    - hiring_manager_id (int): The ID of the hiring manager attempting to update the job.
+
+    Returns:
+    - A success response with updated job data if the update is successful.
+    - Raises HTTPException for errors such as job not found or update failures.
+    """
+    try:
+        # Retrieve the job from the database
+        existing_job = db.query(Job).filter(
+            Job.id == job_id,  # Filter by the job ID
+            Job.hiring_manager_id == hiring_manager_id  # Ensure the job belongs to the hiring manager
+        ).first()
+
+        # Check if the job exists and if the hiring manager has permission to update it
+        if not existing_job:
+            raise HTTPException(status_code=404, detail="Job not found or you do not have permission to update it.")
+
+        # Update job details if provided in the request
+        if job.title is not None:  # Check if a new title is provided
+            existing_job.title = job.title  # Update the title
+        if job.technologyUsed is not None:  # Check if new technology is provided
+            existing_job.technologyUsed = json.dumps(job.technologyUsed)  # Store as JSON string
+        if job.scope is not None:  # Check if a new scope is provided
+            existing_job.scope = job.scope  # Update the scope
+        if job.description is not None:  # Check if a new description is provided
+            existing_job.description = job.description  # Update the description
+        if job.budget is not None:  # Check if a new budget is provided
+            existing_job.budget = job.budget  # Update the budget
+        if job.duration is not None:  # Check if a new duration is provided
+            existing_job.duration = job.duration  # Update the duration
+
+        # Add any additional fields that may need to be updated here
+
+        # Commit the changes to the database to save updates
+        db.commit()
+
+        # Refresh the instance to get the latest state from the database
+        db.refresh(existing_job)
+
+        # Format the response data with camelCase keys for consistency
+        response_data = {
+            "id": existing_job.id,  # Job ID
+            "title": existing_job.title,  # Job title
+            "technologyUsed": json.loads(existing_job.technologyUsed),  # Convert JSON string back to list
+            "scope": existing_job.scope,  # Job scope
+            "description": existing_job.description,  # Job description
+            "budget": existing_job.budget,  # Job budget
+            "duration": existing_job.duration,  # Job duration
+            "hiringManagerId": existing_job.hiring_manager_id,  # ID of the hiring manager
+            # Add any additional fields that need to be included in the response here
+        }
+
+        # Return the formatted response with HTTP 200 OK status
+        return {"status": "success", "data": response_data}, 200
+
+    except Exception as e:
+        # Handle any exceptions that occur during the process
+        # Raise HTTP 400 Bad Request with the error detail
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 #  other logic functions
 
