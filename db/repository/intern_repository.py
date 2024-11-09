@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import json
 from db.models.intern_model import Intern  # Replace with the correct import for your intern model
+from db.models.user_model import Users
 from schemas.intern_schema import InternProfileSchema  # Replace with the correct import for your intern schema
 
 
@@ -11,7 +12,7 @@ def get_intern_dto(intern):
         "id": intern.id,
         "firstName": intern.firstName,
         "lastName": intern.lastName,
-        "email": intern.email,  # Added email field to the DTO
+        # "email": intern.email,  # Added email field to the DTO
         "mobileNo": intern.mobileNo,
         "education": intern.education,
         "skills": intern.skills,
@@ -24,14 +25,15 @@ def get_intern_dto(intern):
 # Retrieve intern profile based on user_id
 def retrieve_intern_profile(user_id: int, db: Session):
     profile = db.query(Intern).filter(Intern.user_id == user_id).first()
-
     if profile:
         # Deserialize JSON fields before returning the DTO
         profile.skills = json.loads(profile.skills) if profile.skills else []
         profile.idDetails = json.loads(profile.idDetails) if profile.idDetails else {}
         profile.company = json.loads(profile.company) if profile.company else {}
-
-        return {"status": "success", "data": get_intern_dto(profile)}
+        user = db.query(Users).filter(Users.id == profile.user_id).first()
+        profile = get_intern_dto(profile)
+        profile.update({"email": user.email})
+        return {"status": "success", "data": profile}
     else:
         raise HTTPException(status_code=404, detail="Intern not found")
 
@@ -50,7 +52,7 @@ def update_intern_profile(user_id: int, intern_data: InternProfileSchema, db: Se
         # Update the intern's profile fields
         intern.firstName = intern_data.firstName
         intern.lastName = intern_data.lastName
-        intern.email = intern_data.email
+        # intern.email = intern_data.email
         intern.mobileNo = intern_data.mobileNo
         intern.education = intern_data.education
         intern.skills = json.dumps(intern_data.skills) if isinstance(intern_data.skills, list) else intern_data.skills

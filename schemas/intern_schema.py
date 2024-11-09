@@ -1,5 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Dict
+
+from numpy import integer
 from pydantic import BaseModel
 
 # Schema for ID details related to an intern
@@ -20,9 +22,8 @@ from typing import Optional, List
 class InternProfileSchema(BaseModel):
     firstName: Optional[str] = None
     lastName: Optional[str] = None
-    mobileNo: Optional[str] = None
+    mobileNo: Optional[int] = None
     education: Optional[str] = None
-    email: Optional[str] = None  # Add email field
     skills: Optional[List[str]] = None
     status: Optional[str] = None
     idDetails: Optional[Dict[str, str]] = None  # Dictionary for ID details

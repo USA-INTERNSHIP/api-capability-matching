@@ -1,8 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, BigInteger, DateTime, func
-from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from db.base_class import Base
-from sqlalchemy.types import TypeDecorator, TEXT
 import json
 
 
@@ -36,16 +34,10 @@ class Job(Base):
     budget = Column(Float)
     duration = Column(String)
 
-    # subtitle = Column(String)
-    # upload_date = Column(DateTime, default=func.now())
-    # deadline = Column(DateTime)
-    # stipend = Column(Float)
-    # location = Column(String)
-    # approval = Column(Boolean, default=False)
-    # jd_doc = Column(String)
-    # perks = Column(String)
-    # no_of_openings = Column(Integer)
     hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
+    mentor_id = Column(Integer, ForeignKey("mentor.id"))
+
+    mentor = relationship("Mentor", back_populates="jobs")
     hiring_manager = relationship("HiringManager", back_populates="jobs")
 
     def __init__(self, **kwargs):

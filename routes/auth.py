@@ -123,6 +123,14 @@ async def verify_google_token(auth_request: GoogleAuthRequest, db: Session = Dep
             raise ValueError("User email doesn't match")
 
         user_db = get_user_by_email(db=db, email=user_mail)
+        if user_db:
+
+            if user_db.userRole != auth_request.user_details.get('userRole'):
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid role.",
+                    headers={"WWW-Authenticate": "Bearer"}
+                )
         if not user_db:
             new_user = UserRegisterSchema(
                 username=user_mail,

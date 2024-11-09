@@ -1,6 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from db.models.hiring_manager_model import Job, HiringManager
+from db.models.mentor_model import Mentor
+from db.models.user_model import Users
 from routes.base_routes import api_router
 from db.base_class import Base
 from db.session import engine
@@ -13,7 +17,7 @@ def include_router(app):
 
 
 def create_tables(app):
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine)  #,checkfirst=True
 
 
 def create_app():

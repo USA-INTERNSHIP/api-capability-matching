@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from db.models.hiring_manager_model import HiringManager, Job  # Correct import
+from db.models.user_model import Users
 from schemas.hiring_manager_schema import HiringManagerProfileSchema, JobSchema
 from sqlalchemy import or_
 import json  # Add this import at the top of your file
@@ -54,7 +55,10 @@ def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfile
 def retrieve_hiring_manager_profile(hiring_manager_id, db:Session):
     profile =  db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
     if profile:
-        return {"status":"success","data":getHiringManagerDTO(profile)}
+        user = db.query(Users).filter(Users.id == profile.user_id).first()
+        profile = getHiringManagerDTO(profile)
+        profile.update({"email":user.email})
+        return {"data":profile}
     else:
         return profile
 
@@ -258,10 +262,15 @@ def search_job_logic(query: str, db: Session):
         raise HTTPException(status_code=400, detail=str(e))  # Handle exceptions
 
 
-#  other logic functions
+def get_interesed_mentors_for_project(project_id,hiring_manager_id,db:Session):
+    mentors = []
+    return mentors
+
+def grantMentorForProject():
+
+    return True
 
 # Note for my future understanding : logic for all the functions is yet to be defined as per the requirement
-
 def search_interns_logic():
     return None
 

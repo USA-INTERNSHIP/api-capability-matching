@@ -11,9 +11,8 @@ class Users(Base):
     password = Column(String)
     socialLogin = Column(Boolean, default=False)
     userRole = Column(String)
-
-    # Relationship with HiringManager
     hiringManager = relationship('HiringManager', back_populates='user', uselist=False)
 
+    mentor = relationship('Mentor', back_populates='user', uselist=False)
     # Relationship with Intern (new)
     internProfile = relationship('Intern', back_populates='user', uselist=False)
