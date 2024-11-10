@@ -53,6 +53,11 @@ def update_intern_profile_route(intern_data: InternProfileSchema, current_user: 
     return updated_profile
 
 
+@intern_routes.get("/view_jobs")
+@check_roles(["INTERN"])
+def view_available_jobs(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    return view_available_jobs_logic(db)
+
 # Route to allow an intern to apply for a job
 @intern_routes.post("/apply_job")
 @check_roles(["INTERN"])
@@ -61,10 +66,6 @@ def apply_for_job(job_application: ApplicationSchema, current_user: dict = Depen
     return apply_for_job_logic(job_application, db, intern_id)
 
 # Route to view all available jobs for interns
-@intern_routes.get("/view_jobs")
-@check_roles(["INTERN"])
-def view_available_jobs(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
-    return view_available_jobs_logic(db)
 
 # Route to view jobs that the intern has applied for
 @intern_routes.get("/applied_jobs")

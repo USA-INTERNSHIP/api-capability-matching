@@ -2,6 +2,7 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from db.models.hiring_manager_model import HiringManager
 from db.models.intern_model import Intern
+from db.models.mentor_model import Mentor
 from db.models.user_model import Users
 from fastapi import HTTPException
 from schemas.user_schema import UserRegisterSchema
@@ -37,13 +38,23 @@ def create_user(user: UserRegisterSchema, db: Session):
         elif user_obj.userRole == "INTERN":
             intern = Intern(
                 user_id=user_obj.id,  # Link to the created user
-                firstName=None,  # Explicitly set to None, as allowed
-                lastName=None,  # Explicitly set to None, as allowed
+                firstName="Intern",  # Explicitly set to None, as allowed
+                lastName="Test",  # Explicitly set to None, as allowed
                 mobileNo=None  # Mobile number is NULL
             )
             db.add(intern)  # Add intern to the session
             db.commit()  # Commit the session for intern
             db.refresh(intern)  # Refresh if needed
+        elif user_obj.userRole == "MENTOR":
+            mentor = Mentor(
+                user_id=user_obj.id,  # Link to the created user
+                firstName= "Test",  # Explicitly set to None, as allowed
+                lastName="Mentor",  # Explicitly set to None, as allowed
+                mobileNo=None  # Mobile number is NULL
+            )
+            db.add(mentor)  # Add mentor to the session
+            db.commit()  # Commit the session for intern
+            db.refresh(mentor)  # Refresh if needed
 
         return user_obj  # Return the created user object
     except Exception as e:

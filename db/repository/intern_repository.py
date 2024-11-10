@@ -1,7 +1,10 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import json
+
+from db.models.hiring_manager_model import Job, HiringManager
 from db.models.intern_model import Intern  # Replace with the correct import for your intern model
+from db.models.mentor_model import Mentor
 from db.models.user_model import Users
 from schemas.intern_schema import InternProfileSchema  # Replace with the correct import for your intern schema
 
@@ -81,14 +84,60 @@ def update_intern_profile(user_id: int, intern_data: InternProfileSchema, db: Se
         db.rollback()
         raise HTTPException(status_code=400, detail=f"An error occurred: {str(e)}")
 
+def view_available_jobs_logic(db: Session):
+    try:
+        # Query with explicit joins and column selection
+        jobs = (
+            db.query(
+                # Job table columns
+                Job.id,
+                Job.title,
+                Job.technologyUsed,
+                Job.scope,
+                Job.description,
+                Job.duration,
+                # HiringManager table columns
+                HiringManager.firstName.label('hiring_manager_first_name'),
+                HiringManager.lastName.label('hiring_manager_last_name'),
+                # Mentor table columns
+                Mentor.firstName.label('mentor_first_name'),
+                Mentor.lastName.label('mentor_last_name')
+            )
+            # Join with HiringManager table
+            .join(
+                HiringManager,
+                Job.hiring_manager_id == HiringManager.id
+            )
+            # Join with Mentor table
+            .join(
+                Mentor,
+                Job.mentor_id == Mentor.id
+            )
+            .filter(Job.mentor_id.isnot(None))
+            .all()
+        )
+
+        response_data = [
+            {
+                "id": job.id,
+                "title": job.title,
+                "technologyUsed": json.loads(job.technologyUsed),
+                "scope": job.scope,
+                "description": job.description,
+                "duration": job.duration,
+                "hiringManagerName": f"{job.hiring_manager_first_name} {job.hiring_manager_last_name}",
+                "mentorName": f"{job.mentor_first_name} {job.mentor_last_name}"
+            }
+            for job in jobs
+        ]
+        return {"status": "success", "data": response_data}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # Placeholder functions for future implementation
 def apply_for_job_logic(job_application, db: Session, intern_id: int):
     raise HTTPException(status_code=501, detail="Feature not yet implemented.")
 
-
-def view_available_jobs_logic(db: Session):
-    raise HTTPException(status_code=501, detail="Feature not yet implemented.")
 
 
 def view_applied_jobs_logic(intern_id: int, db: Session):

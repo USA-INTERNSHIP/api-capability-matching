@@ -4,6 +4,7 @@ from db.base_class import Base
 import json
 
 class Intern(Base):
+    __tablename__ = 'intern'
     id = Column(Integer, primary_key=True, index=True)
     firstName = Column(String, nullable=True)
     lastName = Column(String, nullable=True)
@@ -16,8 +17,11 @@ class Intern(Base):
     idDetails = Column(String, nullable=True)  # Optional
     company = Column(String, nullable=True)  # Optional
 
-    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    user_id = Column(Integer, ForeignKey('users.id',ondelete="CASCADE"), unique=True)
     user = relationship('Users', back_populates='internProfile', uselist=False)
+
+    applications = relationship("InternApplications", back_populates="intern")
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

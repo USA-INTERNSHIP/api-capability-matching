@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from db.base_class import Base
 
 class Users(Base):
+    __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
 
     username = Column(String, unique=True, nullable=False)
@@ -11,8 +12,9 @@ class Users(Base):
     password = Column(String)
     socialLogin = Column(Boolean, default=False)
     userRole = Column(String)
-    hiringManager = relationship('HiringManager', back_populates='user', uselist=False)
 
+
+    hiring_manager = relationship("HiringManager", back_populates="user", uselist=False)
     mentor = relationship('Mentor', back_populates='user', uselist=False)
     # Relationship with Intern (new)
     internProfile = relationship('Intern', back_populates='user', uselist=False)

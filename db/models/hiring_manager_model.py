@@ -6,26 +6,21 @@ import json
 
 
 class HiringManager(Base):
+    __tablename__ = 'hiringmanager'
     id = Column(Integer, primary_key=True, index=True)
     firstName = Column(String)
     lastName = Column(String)
     mobileNo = Column(BigInteger)
-    # bio = Column(String)
-    # socialMedia = Column(String)
-    # idProofName = Column(String)
-    # idProofNo = Column(String)
-    # idProofLink = Column(String)
-    # companyName = Column(String)
-    # companyAddress = Column(String)
-    # roleApproval = Column(Boolean, default=False)
 
-    user_id = Column(Integer, ForeignKey('users.id'), unique=True)
+    user_id = Column(Integer, ForeignKey('users.id',ondelete="CASCADE"), unique=True)
 
-    user = relationship('Users', back_populates='hiringManager',uselist = False)
     # Relationships
+    user = relationship('Users', back_populates='hiring_manager',uselist = False)
     jobs = relationship('Job', back_populates='hiring_manager')
+    mentor_applications = relationship("MentorApplications", back_populates="hiring_manager")
 
 class Job(Base):
+    __tablename__ = 'job'
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     technologyUsed = Column(String)  # Store as JSON string
@@ -34,11 +29,14 @@ class Job(Base):
     budget = Column(Float)
     duration = Column(String)
 
-    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id"))
-    mentor_id = Column(Integer, ForeignKey("mentor.id"))
+    hiring_manager_id = Column(Integer, ForeignKey("hiringmanager.id",ondelete="CASCADE"))
+    mentor_id = Column(Integer, ForeignKey("mentor.id",ondelete="SET NULL"))
 
     mentor = relationship("Mentor", back_populates="jobs")
     hiring_manager = relationship("HiringManager", back_populates="jobs")
+
+    mentor_applications = relationship("MentorApplications", back_populates="job")
+    intern_applications = relationship("InternApplications", back_populates="job")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

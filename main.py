@@ -1,15 +1,15 @@
+import os
+
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db.models.hiring_manager_model import Job, HiringManager
-from db.models.mentor_model import Mentor
-from db.models.user_model import Users
-from routes.base_routes import api_router
 from db.base_class import Base
+from db.models import Job, Mentor, Intern, HiringManager, MentorApplications, InternApplications
+from db.models.user_model import Users
 from db.session import engine
-from dotenv import load_dotenv
-import os
+from routes.base_routes import api_router
 
 
 def include_router(app):
@@ -17,8 +17,18 @@ def include_router(app):
 
 
 def create_tables(app):
-    Base.metadata.create_all(bind=engine)  #,checkfirst=True
-
+    tables = [
+        Base.metadata.tables[table_name] for table_name in [
+            "users",
+            "hiringmanager",
+            "intern",
+            "mentor",
+            "job",
+            "mentor_applications",
+            "intern_applications"
+        ]
+    ]
+    Base.metadata.create_all(bind=engine, tables=tables)
 
 def create_app():
     app = FastAPI(title=os.getenv("PROJECT_NAME"))
