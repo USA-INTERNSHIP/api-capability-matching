@@ -55,7 +55,6 @@ def update_intern_profile(user_id: int, intern_data: InternProfileSchema, db: Se
         # Update the intern's profile fields
         intern.firstName = intern_data.firstName
         intern.lastName = intern_data.lastName
-        # intern.email = intern_data.email
         intern.mobileNo = intern_data.mobileNo
         intern.education = intern_data.education
         intern.skills = json.dumps(intern_data.skills) if isinstance(intern_data.skills, list) else intern_data.skills

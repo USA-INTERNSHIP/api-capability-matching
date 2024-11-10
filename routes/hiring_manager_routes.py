@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from db.models import MentorApplications
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import verify_token
 from routes.auth import check_roles
+from schemas.application_schemas import MentorModifyApplications
 from schemas.hiring_manager_schema import (
     HiringManagerProfileSchema, JobSchema, ApplicationSchema,
     ReviewSchema, ContractSchema
@@ -14,7 +16,8 @@ from db.repository.hiring_manager_repository import (
     search_job_logic, search_interns_logic, review_applications_logic,
     respond_to_interns_logic, post_contract_logic, respond_to_milestones_logic,
     pay_intern_logic, review_payment_history_logic, post_review_logic,
-    read_reviews_logic, get_jobs, update_job_logic, get_interesed_mentors_for_project
+    read_reviews_logic, get_jobs, update_job_logic, get_interesed_mentors_for_project,
+    grant_mentor_for_project
 )
 
 hiring_manager_routes = APIRouter()
@@ -22,27 +25,27 @@ hiring_manager_routes = APIRouter()
 @hiring_manager_routes.get("/profile")
 @check_roles(["HIRING_MANAGER"])
 def get_hiring_manager_profile(current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
-    hiring_manager_id = get_userid_by_email(db,current_user['user'])
-    return retrieve_hiring_manager_profile(hiring_manager_id, db)
+    user_id = get_userid_by_email(db,current_user['user'])
+    return retrieve_hiring_manager_profile(user_id, db)
 
 
 @hiring_manager_routes.put("/update_hiring_manager_profile")
 @check_roles(["HIRING_MANAGER"])
 def update_hiring_manager(profile: HiringManagerProfileSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
-    hiring_manager_id = get_userid_by_email(db,current_user['user'])
-    return update_hiring_manager_profile(hiring_manager_id,profile,db)
+    user_id = get_userid_by_email(db,current_user['user'])
+    return update_hiring_manager_profile(user_id,profile,db)
 
 @hiring_manager_routes.post("/post_job")
 @check_roles(["HIRING_MANAGER"])
 def post_job(job: JobSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
-    hiring_manager_id = get_userid_by_email(db,current_user['user'])
-    return post_job_logic(job, db, hiring_manager_id)
+    user_id = get_userid_by_email(db,current_user['user'])
+    return post_job_logic(job, db, user_id)
 
 @hiring_manager_routes.get("/get_jobs")
 @check_roles(["HIRING_MANAGER"])
 async def get_jobs_endpoint(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
-    hiring_manager_id = get_userid_by_email(db, current_user['user'])
-    return get_jobs(hiring_manager_id, db)
+    user_id = get_userid_by_email(db, current_user['user'])
+    return get_jobs(user_id, db)
 
 @hiring_manager_routes.put("/update_job/{job_id}")
 @check_roles(["HIRING_MANAGER"])  # Ensure that only hiring managers can access this endpoint
@@ -52,10 +55,10 @@ def update_job(
     current_user: dict = Depends(verify_token),  # Dependency to verify the current user
     db: Session = Depends(get_db)  # Dependency to get the database session
 ):
-    hiring_manager_id = get_userid_by_email(db, current_user['user'])  # Get the hiring manager ID from the email
+    user_id = get_userid_by_email(db, current_user['user'])  # Get the hiring manager ID from the email
     try:
         # Call the logic function with the necessary parameters, including job_id
-        response = update_job_logic(job_id, job, db, hiring_manager_id)  # Pass job_id to the update logic
+        response = update_job_logic(job_id, job, db, user_id)  # Pass job_id to the update logic
         return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))  # Raise an HTTP exception in case of error
@@ -100,16 +103,18 @@ def search_job(
 @hiring_manager_routes.get("/show_interested_mentors/{project_id}")
 @check_roles(["HIRING_MANAGER"])
 def show_interesed_mentors_for_project(project_id,current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
-    hiring_manager_id = get_userid_by_email(db, current_user['user'])
-    return get_interesed_mentors_for_project(project_id,hiring_manager_id,db)
+    user_id = get_userid_by_email(db, current_user['user'])
+    return get_interesed_mentors_for_project(project_id,user_id,db)
 
+@hiring_manager_routes.put("/modify_mentor_applications")
+@check_roles(["HIRING_MANAGER"])
+def review_applications(payload:MentorModifyApplications,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db, current_user['user'])
+    return grant_mentor_for_project(payload,user_id, db)
 @hiring_manager_routes.get("/search_interns")
 def search_interns(query: str, db: Session = Depends(get_db)):
     return search_interns_logic(query, db)
 
-@hiring_manager_routes.get("/review_applications")
-def review_applications(job_id: int, db: Session = Depends(get_db)):
-    return review_applications_logic(job_id, db)
 
 @hiring_manager_routes.post("/respond_to_interns")
 def respond_to_interns(application_id: int, response: str, db: Session = Depends(get_db)):

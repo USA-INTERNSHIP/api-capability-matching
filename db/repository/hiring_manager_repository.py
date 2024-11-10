@@ -1,7 +1,10 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+
+from db.models import MentorApplications, Mentor
 from db.models.hiring_manager_model import HiringManager, Job  # Correct import
 from db.models.user_model import Users
+from schemas.application_schemas import MentorModifyApplications
 from schemas.hiring_manager_schema import HiringManagerProfileSchema, JobSchema
 from sqlalchemy import or_
 import json  # Add this import at the top of your file
@@ -27,24 +30,6 @@ def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfile
             hiringManager.lastName = profile.lastName
         if profile.mobileNo is not None:
             hiringManager.mobileNo = profile.mobileNo
-        # if profile.socialMedia is not None:
-        #     hiringManager.socialMedia = profile.socialMedia
-        # if profile.roleApproval is not None:
-        #     hiringManager.roleApproval = profile.roleApproval
-        #
-        # if profile.idDetails:
-        #     if profile.idDetails.idProofName is not None:
-        #         hiringManager.idProofName = profile.idDetails.idProofName
-        #     if profile.idDetails.idProofNo is not None:
-        #         hiringManager.idProofNo = profile.idDetails.idProofNo
-        #     if profile.idDetails.idProofLink is not None:
-        #         hiringManager.idProofLink = profile.idDetails.idProofLink
-        #
-        # if profile.company:
-        #     if profile.company.companyName is not None:
-        #         hiringManager.companyName = profile.company.companyName
-        #     if profile.company.companyAddress is not None:
-        #         hiringManager.companyAddress = profile.company.companyAddress
 
         db.commit()
         db.refresh(hiringManager)
@@ -63,13 +48,13 @@ def retrieve_hiring_manager_profile(hiring_manager_id, db:Session):
         return profile
 
 
-def get_jobs(hiring_manager_id: int, db: Session):
+def get_jobs(user_id: int, db: Session):
     try:
-        hiring_manager = db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
+        hiring_manager = db.query(HiringManager).filter(HiringManager.user_id == user_id).first()
         if not hiring_manager:
             raise HTTPException(status_code=404, detail="Hiring manager not found")
 
-        jobs = db.query(Job).filter(Job.hiring_manager_id == hiring_manager_id).all()
+        jobs = db.query(Job).filter(Job.hiring_manager_id == user_id).all()
         response_data = [
             {
                 "id": job.id,
@@ -80,15 +65,6 @@ def get_jobs(hiring_manager_id: int, db: Session):
                 "budget":job.budget,
                 "duration": job.duration,
                 "hiringManagerId": job.hiring_manager_id
-                # "subtitle": job.subtitle,
-                # "uploadDate": job.upload_date.isoformat(),
-                # "deadline": job.deadline.isoformat(),
-                # "stipend": job.stipend,
-                # "location": job.location,
-                # "approval": job.approval,
-                # "jdDoc": job.jd_doc,
-                # "perks": job.perks,
-                # "noOfOpenings": job.no_of_openings
             }
             for job in jobs
         ]
@@ -112,15 +88,6 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
             duration=job.duration,
             hiring_manager_id=hiring_manager_id
 
-            # subtitle=job.subtitle,
-            # upload_date=job.uploadDate,  # Changed to camelCase
-            # deadline=job.deadline,
-            # stipend=job.stipend,
-            # location=job.location,
-            # approval=job.approval,
-            # jd_doc=job.jdDoc,  # Changed to camelCase
-            # perks=job.perks,
-            # no_of_openings=job.noOfOpenings
         )
 
         # Add and commit the new job to the database
@@ -141,15 +108,6 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
             "duration": new_job.duration,
             "hiringManagerId": new_job.hiring_manager_id,  # Changed to camelCase
 
-            # "subtitle": new_job.subtitle,
-            # "uploadDate": new_job.upload_date.isoformat(),  # Convert datetime to ISO format
-            # "deadline": new_job.deadline.isoformat(),  # Convert datetime to ISO format
-            # "stipend": new_job.stipend,
-            # "location": new_job.location,
-            # "approval": new_job.approval,
-            # "jdDoc": new_job.jd_doc,  # Changed to camelCase
-            # "perks": new_job.perks,
-            # "noOfOpenings": new_job.no_of_openings
         }
 
         # Return the formatted response with HTTP 200 OK status
@@ -262,13 +220,95 @@ def search_job_logic(query: str, db: Session):
         raise HTTPException(status_code=400, detail=str(e))  # Handle exceptions
 
 
-def get_interesed_mentors_for_project(project_id,hiring_manager_id,db:Session):
-    mentors = []
-    return mentors
+def get_interesed_mentors_for_project(project_id,user_id,db:Session):
+    hiring_manager_id = db.query(HiringManager).filter(HiringManager.user_id == user_id).first().id
 
-def grantMentorForProject():
+    project = db.query(Job).filter(Job.id == project_id,Job.hiring_manager_id == hiring_manager_id).first()
+    if not project:
+        raise HTTPException(status_code=404,detail="Project not found or you don't have access to this project.")
 
-    return True
+    mentor_applications = (
+        db.query(
+            Mentor.firstName,
+            Mentor.lastName,
+            Mentor.mobileNo,
+            MentorApplications.id,
+            MentorApplications.job_id
+        )
+        .join(MentorApplications, MentorApplications.mentor_id == Mentor.id)
+        .filter(MentorApplications.job_id == project_id,MentorApplications.status == "Applied")
+        .all()
+    )
+    result = [
+        {
+            "firstName": mentor[0],
+            "lastName": mentor[1],
+            "mobile_no": mentor[2],
+            "application_id":mentor[3],
+            "job_id":mentor[4]
+        }
+        for mentor in mentor_applications
+    ]
+    return result
+
+
+def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db: Session):
+    # First verify if the application exists and belongs to the hiring manager
+    application = db.query(MentorApplications).filter(
+        MentorApplications.id == payload.applicationId,
+        MentorApplications.mentor_id == payload.mentorId
+    ).first()
+
+    if not application:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found or invalid mentor ID"
+        )
+    if application.job_id != payload.jobId:
+        raise HTTPException(
+            status_code=400,
+            detail="Job ID in payload doesn't match with application"
+        )
+    # Verify if the job belongs to this hiring manager
+    job = db.query(Job).filter(
+        Job.id == payload.jobId,
+        Job.hiring_manager_id == user_id
+    ).first()
+
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found or you don't have access"
+        )
+
+    try:
+        if payload.status.lower() == "accepted":
+            # Update all other applications for this job to rejected
+            db.query(MentorApplications).filter(
+                MentorApplications.job_id == payload.jobId,
+                MentorApplications.id != payload.applicationId
+            ).update({"status": "rejected"})
+
+            # Update the accepted application
+            application.status = "accepted"
+
+            # Update job table with selected mentor
+            job.mentor_id = payload.mentorId
+
+        elif payload.status.lower() == "rejected":
+            # Just update the status to rejected for this application
+            application.status = "rejected"
+        db.commit()
+        db.refresh(job)
+        db.refresh(application)
+        return True
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating application: {str(e)}"
+        )
 
 # Note for my future understanding : logic for all the functions is yet to be defined as per the requirement
 def search_interns_logic():
