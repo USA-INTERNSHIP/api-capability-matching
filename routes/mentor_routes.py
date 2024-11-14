@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project
+from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project, \
+    view_job_applications, view_available_mentor_jobs
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import check_roles, verify_token
@@ -23,8 +24,20 @@ def update_mentor(profile: MentorProfileSchema,current_user:dict = Depends(verif
     user_id = get_userid_by_email(db,current_user['user'])
     return update_mentor_profile(user_id,profile,db)
 
+@mentor_routes.get("/view_jobs")
+@check_roles(["MENTOR"])
+def view_jobs(current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db,current_user['user'])
+    return view_available_mentor_jobs(user_id,db)
 @mentor_routes.post("/apply_for_project")
 @check_roles(["MENTOR"])
 def apply_for_job(application:ApplicationMentorSchema,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
     user_id = get_userid_by_email(db,current_user['user'])
     return apply_for_project(user_id,application,db)
+
+@mentor_routes.get("/view_job_applications")
+@check_roles(["MENTOR"])
+def view_application(current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db,current_user['user'])
+    return view_job_applications(user_id,db)
+

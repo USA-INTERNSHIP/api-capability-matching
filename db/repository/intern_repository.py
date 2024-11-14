@@ -11,11 +11,11 @@ from schemas.intern_schema import InternProfileSchema  # Replace with the correc
 
 # Function to convert Intern model instance to DTO format
 def get_intern_dto(intern):
+
     return {
         "id": intern.id,
         "firstName": intern.firstName,
         "lastName": intern.lastName,
-        # "email": intern.email,  # Added email field to the DTO
         "mobileNo": intern.mobileNo,
         "education": intern.education,
         "skills": intern.skills,

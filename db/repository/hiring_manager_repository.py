@@ -18,9 +18,9 @@ def getHiringManagerDTO(profile:HiringManagerProfileSchema):
     res['mobileNo'] = profile.mobileNo
     return res
 
-def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfileSchema, db: Session):
+def update_hiring_manager_profile(user_id,profile:HiringManagerProfileSchema, db: Session):
     try:
-        hiringManager = db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
+        hiringManager = db.query(HiringManager).filter(HiringManager.user_id == user_id).first()
         if not hiringManager:
             raise HTTPException(status_code=404, detail="Hiring manager not found")
 
@@ -37,8 +37,8 @@ def update_hiring_manager_profile(hiring_manager_id,profile:HiringManagerProfile
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-def retrieve_hiring_manager_profile(hiring_manager_id, db:Session):
-    profile =  db.query(HiringManager).filter(HiringManager.user_id == hiring_manager_id).first()
+def retrieve_hiring_manager_profile(user_id, db:Session):
+    profile =  db.query(HiringManager).filter(HiringManager.user_id == user_id).first()
     if profile:
         user = db.query(Users).filter(Users.id == profile.user_id).first()
         profile = getHiringManagerDTO(profile)
@@ -73,11 +73,14 @@ def get_jobs(user_id: int, db: Session):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
+def post_job_logic(job: JobSchema, db: Session, user_id):
     """
     Logic for posting a new job by a hiring manager.
     """
     try:
+        hiring_manager_id = db.query(HiringManager).filter(HiringManager.user_id == user_id).first().id
+        if not hiring_manager_id:
+            raise HTTPException(status_code=404, detail="Hiring manager not found")
         # Create a new Job instance
         new_job = Job(
             title=job.title,
@@ -118,7 +121,7 @@ def post_job_logic(job: JobSchema, db: Session, hiring_manager_id):
         raise HTTPException(status_code=400, detail=str(e))
     # Changed to camelCase
 
-def update_job_logic(job_id: int, job: JobSchema, db: Session, hiring_manager_id: int):
+def update_job_logic(job_id: int, job: JobSchema, db: Session, user_id: int):
     """
     Logic for updating an existing job by a hiring manager.
 
@@ -133,6 +136,9 @@ def update_job_logic(job_id: int, job: JobSchema, db: Session, hiring_manager_id
     - Raises HTTPException for errors such as job not found or update failures.
     """
     try:
+        hiring_manager_id = db.query(HiringManager).filter(HiringManager.user_id == user_id).first().id
+        if not hiring_manager_id:
+            raise HTTPException(status_code=404, detail="Hiring manager not found")
         # Retrieve the job from the database
         existing_job = db.query(Job).filter(
             Job.id == job_id,  # Filter by the job ID
@@ -287,17 +293,17 @@ def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db
             db.query(MentorApplications).filter(
                 MentorApplications.job_id == payload.jobId,
                 MentorApplications.id != payload.applicationId
-            ).update({"status": "rejected"})
+            ).update({"status": "Rejected"})
 
             # Update the accepted application
-            application.status = "accepted"
+            application.status = "Accepted"
 
             # Update job table with selected mentor
             job.mentor_id = payload.mentorId
 
         elif payload.status.lower() == "rejected":
             # Just update the status to rejected for this application
-            application.status = "rejected"
+            application.status = "Rejected"
         db.commit()
         db.refresh(job)
         db.refresh(application)
