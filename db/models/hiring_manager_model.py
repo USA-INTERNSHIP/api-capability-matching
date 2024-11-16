@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, BigInteger, DateTime, func
-from sqlalchemy.orm import relationship
-from db.base_class import Base
 import json
 
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, BigInteger
+from sqlalchemy.orm import relationship
+
+from db.base_class import Base
 
 
 class HiringManager(Base):

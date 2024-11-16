@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project, \
-    view_job_applications, view_available_mentor_jobs
+    view_job_applications, view_available_mentor_jobs, withdraw_mentor_application, get_interesed_interns_for_project, \
+    search_intern_logic, grant_intern_for_project
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import check_roles, verify_token
-from schemas.application_schemas import ApplicationMentorSchema
+from schemas.application_schemas import ApplicationMentorSchema, InternModifyApplications
 from schemas.mentor_schema import MentorProfileSchema
 
 mentor_routes = APIRouter()
@@ -41,3 +42,24 @@ def view_application(current_user:dict = Depends(verify_token), db: Session = De
     user_id = get_userid_by_email(db,current_user['user'])
     return view_job_applications(user_id,db)
 
+@mentor_routes.delete("/withdraw_application/{application_id}")
+@check_roles(["MENTOR"])
+def withdraw_application(application_id,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db,current_user['user'])
+    return withdraw_mentor_application(user_id,application_id,db)
+
+@mentor_routes.get("/show_interested_interns/{project_id}")
+@check_roles(["MENTOR"])
+def show_interested_intern_for_project(project_id,current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
+    user_id = get_userid_by_email(db, current_user['user'])
+    return get_interesed_interns_for_project(project_id,user_id,db)
+
+@mentor_routes.get("/search_intern/{intern_id}")
+def search_interns(intern_id: int, current_user:dict = Depends(verify_token),db: Session = Depends(get_db)):
+    return search_intern_logic(intern_id, db)
+
+@mentor_routes.put("/modify_intern_applications")
+@check_roles(["MENTOR"])
+def review_applications(payload:InternModifyApplications,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db, current_user['user'])
+    return grant_intern_for_project(payload,user_id, db)

@@ -2,10 +2,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import json
 
+from db.models import InternApplications
 from db.models.hiring_manager_model import Job, HiringManager
 from db.models.intern_model import Intern  # Replace with the correct import for your intern model
 from db.models.mentor_model import Mentor
 from db.models.user_model import Users
+from schemas.application_schemas import ApplicationInternSchema
 from schemas.intern_schema import InternProfileSchema  # Replace with the correct import for your intern schema
 
 
@@ -133,14 +135,164 @@ def view_available_jobs_logic(db: Session):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# Placeholder functions for future implementation
-def apply_for_job_logic(job_application, db: Session, intern_id: int):
-    raise HTTPException(status_code=501, detail="Feature not yet implemented.")
+def apply_for_job_logic(user_id: int,application:ApplicationInternSchema, db: Session):
+
+    try:
+        intern_id = db.query(Intern).filter(Intern.user_id == user_id).first().id
+        if not intern_id :
+            raise HTTPException(status_code=404, detail="Intern not found")
+
+        job = db.query(Job).filter(Job.id == application.jobId).first()
+        if not job:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if not job.mentor_id:
+            raise HTTPException(status_code=404,detail="Mentor is not assigned to project")
+        if application.status != "Applied":
+            raise HTTPException(status_code=400, detail="Invalid Status:"+application.status)
+
+        already_applied = db.query(InternApplications).filter(
+            InternApplications.intern_id == intern_id,
+            InternApplications.job_id == application.jobId
+        ).first()
+
+        if already_applied:
+            raise HTTPException(
+                status_code=400,
+                detail="You have already applied for this job"
+            )
+
+        new_application = InternApplications(
+            status = application.status,
+            job_id = application.jobId,
+            mentor_id = job.mentor_id,
+            intern_id = intern_id
+        )
+
+        # Add and commit the new application to the database
+        db.add(new_application)
+        db.commit()
+
+        # Refresh the instance to get the latest state from the database
+        db.refresh(new_application)
+
+        # Format the response data with camelCase keys
+        response_data = {
+            "status": new_application.status,
+            "job_id": new_application.job_id,
+            "mentor_id": new_application.mentor_id,
+            "intern_id": new_application.intern_id
+        }
+
+        # Return the formatted response with HTTP 200 OK status
+        return {"status": "success", "data": response_data}, 200
+
+    except Exception as e:
+        # Handle any exceptions and return HTTP 400 Bad Request
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+def view_applied_jobs_logic(user_id: int, db: Session):
+    # Get intern id from user_id
+    intern = db.query(Intern).filter(Intern.user_id == user_id).first()
+    if not intern:
+        raise HTTPException(status_code=404, detail="Intern not found")
+
+    intern_id = intern.id
+
+    # Query applications with job and mentor details
+    applications = (
+        db.query(
+            Job.id.label('job_id'),
+            Job.title.label('job_title'),
+            InternApplications.id.label("application_id"),
+            InternApplications.status,
+            Mentor.firstName.label('mentor_first_name'),
+            Mentor.lastName.label('mentor_last_name')
+        )
+        .join(
+            InternApplications,
+            InternApplications.job_id == Job.id
+        )
+        .join(
+            Mentor,
+            Mentor.id == Job.mentor_id
+        )
+        .filter(InternApplications.intern_id == intern_id)
+        .all()
+    )
+
+    # Format the results
+    result = [
+        {
+            "job_id": app.job_id,
+            "job_title": app.job_title,
+            "application_id": app.application_id,
+            "application_status": app.status,
+            "mentor": f"{app.mentor_first_name} {app.mentor_last_name}"
+        }
+        for app in applications
+    ]
+
+    return result
+
+def withdraw_intern_application(user_id: int, application_id: int, db: Session):
+    try:
+
+        intern_id = db.query(Intern).filter(Intern.user_id == user_id).first().id
+        if not intern_id:
+            raise HTTPException(status_code=404, detail="Intern not found")
+
+        # Find the application
+        application = db.query(InternApplications).filter(
+            InternApplications.id == application_id,
+            InternApplications.intern_id == intern_id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=404,
+                detail="Application not found or you don't have permission to withdraw it"
+            )
+
+        # Check if application can be withdrawn (only if status is "Applied")
+        if application.status != "Applied":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot withdraw application with status: " + application.status
+            )
+
+        # Delete the application
+        db.delete(application)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Application withdrawn successfully"
+        }, 200
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 
-def view_applied_jobs_logic(intern_id: int, db: Session):
-    raise HTTPException(status_code=501, detail="Feature not yet implemented.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def review_contract_logic(contract_id: int, db: Session):

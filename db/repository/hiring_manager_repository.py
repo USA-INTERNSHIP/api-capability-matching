@@ -6,7 +6,7 @@ from db.models.hiring_manager_model import HiringManager, Job  # Correct import
 from db.models.user_model import Users
 from schemas.application_schemas import MentorModifyApplications
 from schemas.hiring_manager_schema import HiringManagerProfileSchema, JobSchema
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 import json  # Add this import at the top of your file
 
 
@@ -54,7 +54,7 @@ def get_jobs(user_id: int, db: Session):
         if not hiring_manager:
             raise HTTPException(status_code=404, detail="Hiring manager not found")
 
-        jobs = db.query(Job).filter(Job.hiring_manager_id == user_id).all()
+        jobs = db.query(Job).filter(Job.hiring_manager_id == hiring_manager.id).all()
         response_data = [
             {
                 "id": job.id,
@@ -239,10 +239,18 @@ def get_interesed_mentors_for_project(project_id,user_id,db:Session):
             Mentor.lastName,
             Mentor.mobileNo,
             MentorApplications.id,
-            MentorApplications.job_id
+            MentorApplications.job_id,
+            Mentor.id,
+            MentorApplications.status
         )
-        .join(MentorApplications, MentorApplications.mentor_id == Mentor.id)
-        .filter(MentorApplications.job_id == project_id,MentorApplications.status == "Applied")
+        .join(MentorApplications,
+              and_(
+                  MentorApplications.mentor_id == Mentor.id,
+                  or_(
+                      MentorApplications.status == "Applied",
+                      MentorApplications.status == "Approved"
+                  )
+              )).filter(MentorApplications.job_id == project_id)
         .all()
     )
     result = [
@@ -251,7 +259,9 @@ def get_interesed_mentors_for_project(project_id,user_id,db:Session):
             "lastName": mentor[1],
             "mobile_no": mentor[2],
             "application_id":mentor[3],
-            "job_id":mentor[4]
+            "job_id":mentor[4],
+            "mentor_id":mentor[5],
+            "application_status":mentor[6]
         }
         for mentor in mentor_applications
     ]
@@ -275,10 +285,16 @@ def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db
             status_code=400,
             detail="Job ID in payload doesn't match with application"
         )
+    if application.status == "Approved":
+        raise HTTPException(
+            status_code=404,
+            detail="You can not modify status after Approval."
+        )
     # Verify if the job belongs to this hiring manager
+    hiring_manager_id = db.query(HiringManager).filter(HiringManager.user_id == user_id).first().id
     job = db.query(Job).filter(
         Job.id == payload.jobId,
-        Job.hiring_manager_id == user_id
+        Job.hiring_manager_id == hiring_manager_id
     ).first()
 
     if not job:
@@ -288,7 +304,7 @@ def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db
         )
 
     try:
-        if payload.status.lower() == "accepted":
+        if payload.status == "Approved":
             # Update all other applications for this job to rejected
             db.query(MentorApplications).filter(
                 MentorApplications.job_id == payload.jobId,
@@ -296,18 +312,23 @@ def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db
             ).update({"status": "Rejected"})
 
             # Update the accepted application
-            application.status = "Accepted"
+            application.status = "Approved"
 
             # Update job table with selected mentor
             job.mentor_id = payload.mentorId
 
-        elif payload.status.lower() == "rejected":
+        elif payload.status == "Rejected":
             # Just update the status to rejected for this application
             application.status = "Rejected"
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Invalid Job Status"
+            )
         db.commit()
         db.refresh(job)
         db.refresh(application)
-        return True
+        return application
 
     except Exception as e:
         db.rollback()
@@ -317,8 +338,8 @@ def grant_mentor_for_project(payload: MentorModifyApplications, user_id: int, db
         )
 
 # Note for my future understanding : logic for all the functions is yet to be defined as per the requirement
-def search_interns_logic():
-    return None
+# def search_interns_logic():
+#     return None
 
 
 def review_applications_logic():

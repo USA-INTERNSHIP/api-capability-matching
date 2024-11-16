@@ -1,12 +1,13 @@
 import json
 
 from fastapi import HTTPException
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, join
 
-from db.models import Mentor, MentorApplications, Job, HiringManager
+from db.models import Mentor, MentorApplications, Job, HiringManager, Intern, InternApplications
 from db.models.user_model import Users
-from schemas.application_schemas import ApplicationMentorSchema
+from db.repository.intern_repository import get_intern_dto
+from schemas.application_schemas import ApplicationMentorSchema, InternModifyApplications
 from schemas.mentor_schema import MentorProfileSchema
 
 
@@ -120,8 +121,8 @@ def update_mentor_profile(user_id, profile: MentorProfileSchema, db: Session):
 def apply_for_project(user_id:int,application:ApplicationMentorSchema,db:Session):
 
     try:
-        mentor = db.query(Mentor).filter(Mentor.user_id == user_id).first()
-        if mentor.id != application.mentorId:
+        mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+        if not mentor_id :
             raise HTTPException(status_code=404, detail="Mentor not found")
 
         job = db.query(Job).filter(Job.id == application.jobId).first()
@@ -132,7 +133,7 @@ def apply_for_project(user_id:int,application:ApplicationMentorSchema,db:Session
             raise HTTPException(status_code=400, detail="Invalid Status:"+application.status)
 
         already_applied = db.query(MentorApplications).filter(
-            MentorApplications.mentor_id == application.mentorId,
+            MentorApplications.mentor_id == mentor_id,
             MentorApplications.job_id == application.jobId
         ).first()
 
@@ -145,7 +146,7 @@ def apply_for_project(user_id:int,application:ApplicationMentorSchema,db:Session
         new_application = MentorApplications(
             status = application.status,
             job_id = application.jobId,
-            mentor_id = application.mentorId,
+            mentor_id = mentor_id,
             hiring_manager_id = job.hiring_manager.id
         )
 
@@ -185,6 +186,7 @@ def view_job_applications(user_id: int, db: Session):
         db.query(
             Job.id.label('job_id'),
             Job.title.label('job_title'),
+            MentorApplications.id.label("application_id"),
             MentorApplications.status,
             HiringManager.firstName.label('hiring_manager_first_name'),
             HiringManager.lastName.label('hiring_manager_last_name')
@@ -206,6 +208,7 @@ def view_job_applications(user_id: int, db: Session):
         {
             "job_id": app.job_id,
             "job_title": app.job_title,
+            "application_id":app.application_id,
             "application_status": app.status,
             "hiring_manager": f"{app.hiring_manager_first_name} {app.hiring_manager_last_name}"
         }
@@ -213,3 +216,156 @@ def view_job_applications(user_id: int, db: Session):
     ]
 
     return result
+
+
+def withdraw_mentor_application(user_id: int, application_id: int, db: Session):
+    try:
+
+        mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+        if not mentor_id:
+            raise HTTPException(status_code=404, detail="Mentor not found")
+
+        # Find the application
+        application = db.query(MentorApplications).filter(
+            MentorApplications.id == application_id,
+            MentorApplications.mentor_id == mentor_id
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=404,
+                detail="Application not found or you don't have permission to withdraw it"
+            )
+
+        # Check if application can be withdrawn (only if status is "Applied")
+        if application.status != "Applied":
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot withdraw application with status: " + application.status
+            )
+
+        # Delete the application
+        db.delete(application)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Application withdrawn successfully"
+        }, 200
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+def get_interesed_interns_for_project(project_id,user_id,db:Session):
+    mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+
+    project = db.query(Job).filter(Job.id == project_id,Job.mentor_id == mentor_id).first()
+    if not project:
+        raise HTTPException(status_code=404,detail="Project not found or you don't have access to this project.")
+
+    intern_applications = (
+        db.query(
+            Intern.firstName,
+            Intern.lastName,
+            Intern.mobileNo,
+            InternApplications.id,
+            InternApplications.job_id,
+            Intern.id,
+            InternApplications.status
+        )
+        .join(InternApplications,
+              and_(
+                  InternApplications.intern_id == Intern.id,
+                  or_(
+                      InternApplications.status == "Applied",
+                      InternApplications.status == "Approved"
+                  )
+              )).filter(InternApplications.job_id == project_id)
+        .all()
+    )
+    result = [
+        {
+            "firstName": intern[0],
+            "lastName": intern[1],
+            "mobile_no": intern[2],
+            "application_id":intern[3],
+            "job_id":intern[4],
+            "intern_id":intern[5],
+            "application_status":intern[6]
+        }
+        for intern in intern_applications
+    ]
+    return result
+
+def search_intern_logic(intern_id:int,db:Session):
+    profile = db.query(Intern).filter(Intern.id == intern_id).first()
+    if profile:
+        # Deserialize JSON fields before returning the DTO
+        profile.skills = json.loads(profile.skills) if profile.skills else []
+        profile.idDetails = json.loads(profile.idDetails) if profile.idDetails else {}
+        profile.company = json.loads(profile.company) if profile.company else {}
+        # user = db.query(Users).filter(Users.id == profile.user_id).first()
+        profile = get_intern_dto(profile)
+        # profile.update({"email": user.email})
+        return {"status": "success", "data": profile}
+    else:
+        raise HTTPException(status_code=404, detail="Intern not found")
+
+def grant_intern_for_project(payload: InternModifyApplications, user_id: int, db: Session):
+    # First verify if the application exists and belongs to the mentor
+    application = db.query(InternApplications).filter(
+        InternApplications.id == payload.applicationId,
+        InternApplications.intern_id == payload.internId
+    ).first()
+
+    if not application:
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found or invalid intern ID"
+        )
+    if application.job_id != payload.jobId:
+        raise HTTPException(
+            status_code=400,
+            detail="Job ID in payload doesn't match with application"
+        )
+    if application.status == "Approved":
+        raise HTTPException(
+            status_code=404,
+            detail="You can not modify status after Approval."
+        )
+    # Verify if the job belongs to this hiring manager
+    mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+    job = db.query(Job).filter(
+        Job.id == payload.jobId,
+        Job.mentor_id == mentor_id
+    ).first()
+
+    if not job:
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found or you don't have access"
+        )
+
+    try:
+        if payload.status == "Approved":
+            # Update the accepted application
+            application.status = "Approved"
+        elif payload.status == "Rejected":
+            # update the status to rejected for this application
+            application.status = "Rejected"
+        else:
+            raise HTTPException(
+                status_code=404,
+                detail="Invalid Job Status"
+            )
+        db.commit()
+        db.refresh(job)
+        db.refresh(application)
+        return application
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating application: {str(e)}"
+        )
