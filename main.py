@@ -26,7 +26,8 @@ def create_tables(app):
             "job",
             "mentor_applications",
             "intern_applications",
-            "tasks"
+            "tasks",
+            "admin"
         ]
     ]
     Base.metadata.create_all(bind=engine, tables=tables)
