@@ -17,3 +17,4 @@ class Mentor(Base):
 
     mentor_applications = relationship("MentorApplications", back_populates="mentor")
     intern_applications = relationship("InternApplications", back_populates="mentor")
+    tasks = relationship("Tasks", back_populates="mentor")

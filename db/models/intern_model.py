@@ -18,10 +18,10 @@ class Intern(Base):
     company = Column(String, nullable=True)  # Optional
 
     user_id = Column(Integer, ForeignKey('users.id',ondelete="CASCADE"), unique=True)
+
     user = relationship('Users', back_populates='internProfile', uselist=False)
-
     applications = relationship("InternApplications", back_populates="intern")
-
+    tasks = relationship("Tasks", back_populates="intern")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

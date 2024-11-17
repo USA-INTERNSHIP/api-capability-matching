@@ -4,11 +4,12 @@ from fastapi import HTTPException
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, join
 
-from db.models import Mentor, MentorApplications, Job, HiringManager, Intern, InternApplications
+from db.models import Mentor, MentorApplications, Job, HiringManager, Intern, InternApplications, Tasks
 from db.models.user_model import Users
 from db.repository.intern_repository import get_intern_dto
 from schemas.application_schemas import ApplicationMentorSchema, InternModifyApplications
 from schemas.mentor_schema import MentorProfileSchema
+from schemas.tasks_schema import TaskSchema
 
 
 def getMentorDTO(profile:MentorProfileSchema):
@@ -401,3 +402,81 @@ def get_interns_for_project(project_id,user_id,db:Session):
         for intern in intern_applications
     ]
     return result
+
+
+def create_task_for_intern(task: TaskSchema, user_id: int, db: Session):
+    try:
+        # Get mentor id from user_id
+        mentor = db.query(Mentor).filter(Mentor.user_id == user_id).first()
+        if not mentor:
+            raise HTTPException(
+                status_code=404,
+                detail="Mentor not found or you don't have access to this project."
+            )
+
+        mentor_id = mentor.id
+
+        # Check if application exists and is approved
+        application = db.query(InternApplications).filter(
+            InternApplications.job_id == task.job_id,
+            InternApplications.intern_id == task.intern_id,
+            InternApplications.mentor_id == mentor_id,
+            InternApplications.status == "Approved"
+        ).first()
+
+        if not application:
+            raise HTTPException(
+                status_code=404,
+                detail="No approved application found for this intern under your mentorship"
+            )
+
+        # Create new task
+        new_task = Tasks(
+            title=task.title,
+            status=task.status,
+            description=task.description,
+            attachment=task.attachment,
+            assigned_date=task.assigned_date,
+            due_date=task.due_date,
+            completion_date=None,
+            feedback=None,
+
+            job_id=task.job_id,
+            intern_id=task.intern_id,
+            mentor_id=mentor_id
+        )
+
+        # Add and commit to database
+        db.add(new_task)
+        db.commit()
+        db.refresh(new_task)
+
+        # Create comprehensive response data
+        response_data = {
+            "id": new_task.id,
+            "title": new_task.title,
+            "status": new_task.status,
+            "description": new_task.description,
+            "attachment": new_task.attachment,
+            "assigned_date": new_task.assigned_date,
+            "due_date": new_task.due_date,
+            "completion_date": new_task.completion_date,
+            "feedback": new_task.feedback,
+            "job_id": new_task.job_id,
+            "mentor_id": new_task.mentor_id,
+            "intern_id": new_task.intern_id
+        }
+
+        return {
+            "status": "success",
+            "message": "Task assigned successfully",
+            "data": response_data
+        }, 200
+
+    except HTTPException as http_err:
+        raise http_err
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while creating the task: {str(e)}"
+        )

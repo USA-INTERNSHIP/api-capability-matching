@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 
 from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project, \
     view_job_applications, view_available_mentor_jobs, withdraw_mentor_application, get_interesed_interns_for_project, \
-    search_intern_logic, grant_intern_for_project, get_interns_for_project
+    search_intern_logic, grant_intern_for_project, get_interns_for_project, create_task_for_intern
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import check_roles, verify_token
 from schemas.application_schemas import ApplicationMentorSchema, InternModifyApplications
 from schemas.mentor_schema import MentorProfileSchema
+from schemas.tasks_schema import TaskSchema
 
 mentor_routes = APIRouter()
 
@@ -69,3 +70,9 @@ def review_applications(payload:InternModifyApplications,current_user:dict = Dep
 def show_project_intern_for_project(project_id,current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
     user_id = get_userid_by_email(db, current_user['user'])
     return get_interns_for_project(project_id,user_id,db)
+
+@mentor_routes.post("/assign_task_to_intern")
+@check_roles(["MENTOR"])
+def show_project_intern_for_project(task:TaskSchema,current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
+    user_id = get_userid_by_email(db, current_user['user'])
+    return create_task_for_intern(task,user_id,db)

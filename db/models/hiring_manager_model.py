@@ -38,7 +38,7 @@ class Job(Base):
 
     mentor_applications = relationship("MentorApplications", back_populates="job")
     intern_applications = relationship("InternApplications", back_populates="job")
-
+    tasks = relationship("Tasks", back_populates="job")
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if 'technologyUsed' in kwargs and isinstance(kwargs['technologyUsed'], list):
