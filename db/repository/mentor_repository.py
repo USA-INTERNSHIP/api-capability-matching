@@ -277,8 +277,7 @@ def get_interesed_interns_for_project(project_id,user_id,db:Session):
               and_(
                   InternApplications.intern_id == Intern.id,
                   or_(
-                      InternApplications.status == "Applied",
-                      InternApplications.status == "Approved"
+                      InternApplications.status == "Applied"
                   )
               )).filter(InternApplications.job_id == project_id)
         .all()
@@ -369,3 +368,36 @@ def grant_intern_for_project(payload: InternModifyApplications, user_id: int, db
             status_code=500,
             detail=f"Error updating application: {str(e)}"
         )
+
+def get_interns_for_project(project_id,user_id,db:Session):
+
+    mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+
+    project = db.query(Job).filter(Job.id == project_id,Job.mentor_id == mentor_id).first()
+    if not project:
+        raise HTTPException(status_code=404,detail="Project not found or you don't have access to this project.")
+
+    intern_applications = (
+        db.query(
+            Intern.firstName,
+            Intern.lastName,
+            Intern.id,
+        )
+        .join(InternApplications,
+              and_(
+                  InternApplications.intern_id == Intern.id,
+                  or_(
+                      InternApplications.status == "Approved"
+                  )
+              )).filter(InternApplications.job_id == project_id)
+        .all()
+    )
+    result = [
+        {
+            "Name": f"{intern[0]} {intern[1]}",
+            "job_id":project.id,
+            "intern_id":intern[2],
+        }
+        for intern in intern_applications
+    ]
+    return result

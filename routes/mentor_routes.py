@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project, \
     view_job_applications, view_available_mentor_jobs, withdraw_mentor_application, get_interesed_interns_for_project, \
-    search_intern_logic, grant_intern_for_project
+    search_intern_logic, grant_intern_for_project, get_interns_for_project
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import check_roles, verify_token
@@ -63,3 +63,9 @@ def search_interns(intern_id: int, current_user:dict = Depends(verify_token),db:
 def review_applications(payload:InternModifyApplications,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
     user_id = get_userid_by_email(db, current_user['user'])
     return grant_intern_for_project(payload,user_id, db)
+
+@mentor_routes.get("/show_project_interns/{project_id}")
+@check_roles(["MENTOR"])
+def show_project_intern_for_project(project_id,current_user:dict = Depends(verify_token),db:Session=Depends(get_db)):
+    user_id = get_userid_by_email(db, current_user['user'])
+    return get_interns_for_project(project_id,user_id,db)
