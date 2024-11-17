@@ -18,3 +18,4 @@ class Users(Base):
     mentor = relationship('Mentor', back_populates='user', uselist=False)
     # Relationship with Intern (new)
     internProfile = relationship('Intern', back_populates='user', uselist=False)
+    admin = relationship("Admin", back_populates="user", uselist=False)
