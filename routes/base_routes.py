@@ -13,7 +13,7 @@ api_router = APIRouter()
 
 # Include user and authentication routes
 api_router.include_router(user_routes)
-api_router.include_router(auth_routes, prefix='/auth')
+api_router.include_router(auth_routes, prefix='/auth', tags=["auth"])
 
 
 api_router.include_router(admin_routes, prefix="/admin", tags=["admin"])

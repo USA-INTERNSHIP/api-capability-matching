@@ -1,7 +1,9 @@
 import json
+from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import and_, or_
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, join
 
 from db.models import Mentor, MentorApplications, Job, HiringManager, Intern, InternApplications, Tasks
@@ -480,3 +482,60 @@ def create_task_for_intern(task: TaskSchema, user_id: int, db: Session):
             status_code=500,
             detail=f"An error occurred while creating the task: {str(e)}"
         )
+
+
+
+def retrieve_task(task_id: int, db: Session):
+    task = db.query(Tasks).filter(Tasks.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+
+def update_task_details(task_id: int, task_payload: TaskSchema, db: Session):
+    task = db.query(Tasks).filter(Tasks.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    for key, value in task_payload.dict(exclude_unset=True).items():
+        setattr(task, key, value)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def update_task_status(task_id: int, status: str, db: Session):
+    task = db.query(Tasks).filter(Tasks.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    task.status = status
+    if status == "Completed":
+        task.completion_date = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+
+def update_task_status_to_partially_completed(task_id: int, db: Session):
+    """
+    Update the status of a task to 'Partially Completed' and return the updated task serialized using Pydantic.
+    """
+    try:
+        # Find the task by its ID
+        task = db.query(Tasks).filter(Tasks.id == task_id).first()
+
+        # If task doesn't exist, raise an exception
+        if not task:
+            raise NoResultFound
+
+        # Update the status of the task
+        task.status = "Partially Completed"
+
+        # Commit the changes to the database
+        db.commit()
+
+        # Return the updated task serialized as Pydantic model
+        return TaskSchema.from_orm(task)  # Convert to Pydantic model
+
+    except NoResultFound:
+        return None  # Return None if the task is not found
