@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class AdminRegisterSchema(BaseModel):
-    username: str
-    email: str
-    password: str
-    socialLogin: bool
-    userRole: str
+    username: str = Field()
+    email: str = Field(min_length=3)
+    password: str = Field()
+    socialLogin: bool = Field()
+    userRole: str = Field()
 
-    class Config:
-        orm_mode = True  # Ensure compatibility with SQLAlchemy models
+    # class Config:
+    #     orm_mode = True  # Ensure compatibility with SQLAlchemy models
