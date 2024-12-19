@@ -539,3 +539,9 @@ def update_task_status_to_partially_completed(task_id: int, db: Session):
 
     except NoResultFound:
         return None  # Return None if the task is not found
+
+def view_job_by_id(job_id: int, db: Session):
+    """
+    Fetch a job by its ID from the database.
+    """
+    return db.query(Job).filter(Job.id == job_id).first()
