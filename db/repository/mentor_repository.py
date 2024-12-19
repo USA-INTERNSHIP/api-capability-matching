@@ -545,3 +545,16 @@ def view_job_by_id(job_id: int, db: Session):
     Fetch a job by its ID from the database.
     """
     return db.query(Job).filter(Job.id == job_id).first()
+
+
+def retrieve_all_tasks(db: Session):
+    """
+    Retrieve all tasks assigned to the specific mentor.
+    """
+    tasks = db.query(Tasks).all()
+
+    # If no tasks are found, raise HTTPException
+    if not tasks:
+        raise HTTPException(status_code=404, detail="No tasks found")
+
+    return tasks
