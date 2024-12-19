@@ -1,3 +1,4 @@
+from numpy.f2py.auxfuncs import throw_error
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from db.models.hiring_manager_model import HiringManager
@@ -12,6 +13,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_user(user: UserRegisterSchema, db: Session):
     try:
+        if user.userRole not in  ["HIRING_MANAGER", "INTERN"]:
+            raise HTTPException(status_code=403, detail="You are not allowed to register as "+user.userRole)
         # Hash the password
         hashed_password = pwd_context.hash(user.password)
         user_obj = Users(
@@ -45,16 +48,6 @@ def create_user(user: UserRegisterSchema, db: Session):
             db.add(intern)  # Add intern to the session
             db.commit()  # Commit the session for intern
             db.refresh(intern)  # Refresh if needed
-        elif user_obj.userRole == "MENTOR":
-            mentor = Mentor(
-                user_id=user_obj.id,  # Link to the created user
-                firstName= "Test",  # Explicitly set to None, as allowed
-                lastName="Mentor",  # Explicitly set to None, as allowed
-                mobileNo=None  # Mobile number is NULL
-            )
-            db.add(mentor)  # Add mentor to the session
-            db.commit()  # Commit the session for intern
-            db.refresh(mentor)  # Refresh if needed
 
         return user_obj  # Return the created user object
     except Exception as e:
