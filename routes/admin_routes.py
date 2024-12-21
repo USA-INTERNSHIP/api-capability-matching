@@ -13,7 +13,7 @@ admin_routes = APIRouter()
 
 # Route for creating an admin user
 @admin_routes.post("/create-admin")
-@check_roles(["ADMIN"])
+# @check_roles(["ADMIN"])
 def create_admin_route(admin: AdminRegisterSchema,current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
     try:
         # Call the repository function to create the admin user

@@ -28,7 +28,7 @@ def create_admin(admin: AdminRegisterSchema, db: Session):
         user_obj = Users(
             email=admin.email,
             password=hashed_password,
-            username=admin.username.split('@')[0],  # Use the part before '@' as the username
+            username=admin.email.split('@')[0],  # Use the part before '@' as the username
             socialLogin=admin.socialLogin,
             userRole=admin.userRole,
         )
