@@ -14,7 +14,7 @@ from db.repository.intern_repository import (
     update_intern_profile, retrieve_intern_profile, apply_for_job_logic,
     view_available_jobs_logic, view_applied_jobs_logic, review_contract_logic,
     accept_contract_logic, submit_milestone_logic, view_reviews_logic,
-    get_job_application_status_logic, withdraw_intern_application
+    get_job_application_status_logic, withdraw_intern_application, retrieve_assigned_tasks
 )
 
 # Initialize the APIRouter for intern-related routes
@@ -84,6 +84,22 @@ def withdraw_application(application_id,current_user:dict = Depends(verify_token
 def get_job_application_status(job_id: int, current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
     intern_id = get_userid_by_email(db, current_user['user'])
     return get_job_application_status_logic(intern_id, job_id, db)
+
+@intern_routes.get("/view_assigned_tasks")
+@check_roles(["INTERN"])
+def view_all_tasks(current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    """
+    Retrieve all tasks assigned to the current mentor.
+    """
+    user_id = get_userid_by_email(db, current_user['user'])
+
+    # Call the repository function to retrieve tasks for the current mentor
+    tasks = retrieve_assigned_tasks(user_id, db)
+
+    # Return the list of tasks
+    return tasks
+
+
 
 # Route to review a specific contract
 @intern_routes.get("/review_contract/{contract_id}")

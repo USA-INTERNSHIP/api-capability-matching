@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 import json
 
+from db.models import Tasks
 from db.models import InternApplications
 from db.models.hiring_manager_model import Job, HiringManager
 from db.models.intern_model import Intern  # Replace with the correct import for your intern model
@@ -273,6 +274,19 @@ def withdraw_intern_application(user_id: int, application_id: int, db: Session):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+def retrieve_assigned_tasks(user_id: int, db: Session):
+    """
+    Retrieve all tasks assigned to the specific mentor.
+    """
+    intern_id = db.query(Intern).filter(Intern.user_id == user_id).first().id
+
+    tasks = db.query(Tasks).filter(Tasks.intern_id == intern_id).all()
+
+    # If no tasks are found, raise HTTPException
+    if not tasks:
+        raise HTTPException(status_code=404, detail="No tasks found")
+
+    return tasks
 
 
 
