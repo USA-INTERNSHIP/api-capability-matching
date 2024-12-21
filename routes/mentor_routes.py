@@ -119,9 +119,10 @@ def view_all_tasks(current_user: dict = Depends(verify_token), db: Session = Dep
     """
     Retrieve all tasks assigned to the current mentor.
     """
+    user_id = get_userid_by_email(db, current_user['user'])
 
-    # Call the repository function to retrieve tasks
-    tasks = retrieve_all_tasks(db)
+    # Call the repository function to retrieve tasks for the current mentor
+    tasks = retrieve_all_tasks(user_id, db)
 
     # Return the list of tasks
     return tasks

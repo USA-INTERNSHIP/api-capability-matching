@@ -547,11 +547,13 @@ def view_job_by_id(job_id: int, db: Session):
     return db.query(Job).filter(Job.id == job_id).first()
 
 
-def retrieve_all_tasks(db: Session):
+def retrieve_all_tasks(user_id: int, db: Session):
     """
     Retrieve all tasks assigned to the specific mentor.
     """
-    tasks = db.query(Tasks).all()
+    mentor_id = db.query(Mentor).filter(Mentor.user_id == user_id).first().id
+
+    tasks = db.query(Tasks).filter(Tasks.mentor_id == mentor_id).all()
 
     # If no tasks are found, raise HTTPException
     if not tasks:
