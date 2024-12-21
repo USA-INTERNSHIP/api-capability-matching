@@ -77,7 +77,7 @@ def create_mentor(user:UserRegisterSchema,db:Session):
         user_obj = Users(
             email=user.email,
             password=hashed_password,
-            username=user.username.split('@')[0],  # Use the part before '@' as the username
+            username=user.email.split('@')[0],  # Use the part before '@' as the username
             socialLogin=user.socialLogin,
             userRole=user.userRole,
         )
