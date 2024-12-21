@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from db.repository.mentor_repository import retrieve_mentor_profile, update_mentor_profile, apply_for_project, \
     view_job_applications, view_available_mentor_jobs, withdraw_mentor_application, get_interesed_interns_for_project, \
     search_intern_logic, grant_intern_for_project, get_interns_for_project, create_task_for_intern, update_task_status, \
-    update_task_details, retrieve_task, view_job_by_id, update_task_status_to_partially_completed, retrieve_all_tasks
+    update_task_details, retrieve_task, view_job_by_id, update_task_status_to_partially_completed, retrieve_all_tasks, \
+    retrieve_tasks_by_job
 from db.repository.user_repository import get_userid_by_email
 from db.session import get_db
 from routes.auth import check_roles, verify_token
@@ -126,6 +127,23 @@ def view_all_tasks(current_user: dict = Depends(verify_token), db: Session = Dep
 
     # Return the list of tasks
     return tasks
+
+
+@mentor_routes.get("/view_tasks_by_job/{job_id}")
+@check_roles(["MENTOR"])
+def view_all_tasks(job_id: int, current_user: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    """
+    Retrieve all tasks assigned to the current mentor and job.
+    """
+    # Retrieve user_id using the current user's email
+    user_id = get_userid_by_email(db, current_user['user'])
+
+    # Call the repository function to retrieve tasks for the current mentor and job
+    tasks = retrieve_tasks_by_job(user_id, job_id, db)
+
+    # Return the list of tasks
+    return tasks
+
 
 
 @mentor_routes.get("/view_task/{task_id}")

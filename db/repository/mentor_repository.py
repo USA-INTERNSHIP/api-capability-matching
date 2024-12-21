@@ -560,3 +560,27 @@ def retrieve_all_tasks(user_id: int, db: Session):
         raise HTTPException(status_code=404, detail="No tasks found")
 
     return tasks
+
+def retrieve_tasks_by_job(user_id: int, job_id: int, db: Session):
+    """
+    Retrieve all tasks assigned to the specific mentor for a specific job.
+    """
+    # Get the mentor ID from the user ID
+    mentor = db.query(Mentor).filter(Mentor.user_id == user_id).first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="Mentor not found")
+    mentor_id = mentor.id
+
+    # Check if the job exists
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    # Query tasks for the mentor and the specific job ID
+    tasks = db.query(Tasks).filter(Tasks.mentor_id == mentor_id).filter(Tasks.job_id == job_id).all()
+
+    # If no tasks are found, raise an HTTPException
+    if not tasks:
+        raise HTTPException(status_code=404, detail="No tasks found")
+
+    return tasks
