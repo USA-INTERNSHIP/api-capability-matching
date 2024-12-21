@@ -14,7 +14,7 @@ from db.repository.intern_repository import (
     update_intern_profile, retrieve_intern_profile, apply_for_job_logic,
     view_available_jobs_logic, view_applied_jobs_logic, review_contract_logic,
     accept_contract_logic, submit_milestone_logic, view_reviews_logic,
-    get_job_application_status_logic, withdraw_intern_application, retrieve_assigned_tasks
+    get_job_application_status_logic, withdraw_intern_application, retrieve_assigned_tasks, apply_for_task_review
 )
 
 # Initialize the APIRouter for intern-related routes
@@ -98,6 +98,15 @@ def view_all_tasks(current_user: dict = Depends(verify_token), db: Session = Dep
 
     # Return the list of tasks
     return tasks
+
+@intern_routes.patch("/apply_tasks_for_review/{task_id}")
+@check_roles(["INTERN"])
+def apply_for_review(task_id:int,current_user:dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user_id = get_userid_by_email(db,current_user['user'])
+    return apply_for_task_review(user_id,task_id,db)
+
+
+
 
 
 

@@ -288,6 +288,24 @@ def retrieve_assigned_tasks(user_id: int, db: Session):
 
     return tasks
 
+def apply_for_task_review(user_id :int,task_id:int, db : Session) :
+    try:
+        intern_id = db.query(Intern).filter(Intern.user_id == user_id).first().id
+        if not intern_id:
+            raise HTTPException(status_code=404, detail="Intern not found")
+        task = db.query(Tasks).filter(Tasks.intern_id == intern_id,Tasks.id == task_id).first()
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        task.status = "REVIEW"
+        db.commit()
+        db.refresh(task)
+
+        return {"status": "success", "data": task}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 
 
