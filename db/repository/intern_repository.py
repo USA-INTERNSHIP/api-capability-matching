@@ -296,6 +296,8 @@ def apply_for_task_review(user_id :int,task_id:int, db : Session) :
         task = db.query(Tasks).filter(Tasks.intern_id == intern_id,Tasks.id == task_id).first()
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
+        if task.status == "COMPLETE":
+            raise HTTPException(status_code=404, detail="Task already completed.")
         task.status = "REVIEW"
         db.commit()
         db.refresh(task)
